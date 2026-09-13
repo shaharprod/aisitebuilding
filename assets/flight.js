@@ -514,7 +514,7 @@
   var landed = false, startT = 0, raf = 0, lastNow = 0, shake = 0, flash = 0, idleT = 0, prevPos = new T.Vector3(), roll = 0, rollV = 0;
   var _p = new T.Vector3(), _l = new T.Vector3(), _sunW = new T.Vector3(), _ndc = new T.Vector3(), _up = new T.Vector3(0, 1, 0);
   var body = document.body;
-  var landedAt = 0, nextBolt = 0;
+  var landedAt = 0, nextBolt = 0, touched = false;
 
   function lerpC(out, a, b, k) { out.r = a.r + (b.r - a.r) * k; out.g = a.g + (b.g - a.g) * k; out.b = a.b + (b.b - a.b) * k; }
   var C = {
@@ -609,13 +609,14 @@
     if (kCity > 0) updateStreams(dt);
 
     /* --- ברקים בתוך העננים --- */
-    if (!landed && t > 0.30 && t < 0.47 && time > nextBolt) { flash = 0.55 + Math.random() * 0.45; nextBolt = time + 0.5 + Math.random() * 1.6; }
+    if (!landed && t > 0.30 && t < 0.47 && time > nextBolt) { flash = 0.55 + Math.random() * 0.45; nextBolt = time + 0.5 + Math.random() * 1.6; if (window.__sound) window.__sound.thunder(flash); }
     // הבזק פריצה מהעננים
     if (!landed && t > 0.455 && t < 0.47) { flash = Math.max(flash, 0.35); }
     flash *= Math.pow(0.02, dt); finalU.uFlash.value = flash * 0.7;
 
     /* --- נחיתה: מגע --- */
-    if (!landed && t > 0.965 && t < 0.985) { shake = Math.max(shake, 0.9 * (1 - (t - 0.965) / 0.02)); }
+    if (!landed && t > 0.965 && t < 0.985) { shake = Math.max(shake, 0.9 * (1 - (t - 0.965) / 0.02)); if (!touched) { touched = true; if (window.__sound) window.__sound.touchdown(); } }
+    if (window.__sound) window.__sound.setPhase(t, kCloud, kCity, turb, landed, dt);
 
     /* --- פוסט --- */
     finalU.uTime.value = time;
@@ -652,7 +653,7 @@
 
   /* ---------- הפעלה / דילוג / חזרה ---------- */
   function start() {
-    startT = 0; landed = false; capIdx = -1; shake = 0; flash = 0; roll = 0; rollV = 0; nextBolt = 0;
+    startT = 0; landed = false; capIdx = -1; shake = 0; flash = 0; roll = 0; rollV = 0; nextBolt = 0; touched = false;
     P.getPointAt(0, prevPos);
     body.classList.add('flying'); body.classList.remove('landed');
     hud.style.display = ''; hud.classList.remove('gone');
