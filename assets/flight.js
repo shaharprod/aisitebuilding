@@ -24,15 +24,16 @@
   T.ColorManagement.enabled = false;   // צבעים כפי שנכתבו; המיפוי הטונאלי בסוף
 
   var DUR = 5000;
+  var VW = function () { return document.documentElement.clientWidth || innerWidth; }, VH = function () { return document.documentElement.clientHeight || innerHeight; };
   var canvas = document.getElementById('sky');
   var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true });
   renderer.setPixelRatio(DPR);
-  renderer.setSize(innerWidth, innerHeight, false);
+  renderer.setSize(VW(), VH(), false);
   renderer.outputColorSpace = T.LinearSRGBColorSpace;
   renderer.autoClear = true;
 
   var scene = new T.Scene();
-  var camera = new T.PerspectiveCamera(58, innerWidth / innerHeight, 0.5, 9000);
+  var camera = new T.PerspectiveCamera(58, VW() / VH(), 0.5, 9000);
 
   var SUN = new T.Vector3(0.42, 0.10, -0.90).normalize();
   var CLOUD_Y0 = 360, CLOUD_Y1 = 540;
@@ -391,7 +392,7 @@
     g.setAttribute('aKind', new T.Float32BufferAttribute(kind, 1));
     g.setAttribute('aIdx', new T.Float32BufferAttribute(idx, 1));
     var mat = new T.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 }, uScale: { value: innerHeight } },
+      uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 }, uScale: { value: VH() } },
       transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false,
       vertexShader: [
         'attribute float aKind,aIdx; uniform float uTime,uScale; varying float vK,vB;',
@@ -414,106 +415,35 @@
      ===================================================================== */
   var D_FIT = 40, GH = 2 * D_FIT * Math.tan(camera.fov * Math.PI / 360), GY = 24, GZ = -60;
   var gate = (function () {
-    var cv = document.createElement('canvas'), cx = cv.getContext('2d');
-    var tex = new T.CanvasTexture(cv); tex.colorSpace = T.LinearSRGBColorSpace; tex.minFilter = T.LinearFilter; tex.generateMipmaps = false;
-    var portrait = new Image(); portrait.src = 'assets/portrait.jpg';
-    var logo = new Image(); logo.src = 'assets/logo.png';
-    function rr(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
-    function draw(aspect) {
-      var W = 1024, H = Math.round(1024 / aspect); cv.width = W; cv.height = H;
-      cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, W, H);
-      // רקע הדף — סגול עמוק שקוף למחצה, כמו חלון אל האתר
-      cx.fillStyle = 'rgba(11,7,34,0.62)'; cx.fillRect(0, 0, W, H);
-      cx.strokeStyle = 'rgba(255,255,255,0.05)'; cx.lineWidth = 1;
-      for (var gx = 0; gx < W; gx += 64) { cx.beginPath(); cx.moveTo(gx, 0); cx.lineTo(gx, H); cx.stroke(); }
-      for (var gy = 0; gy < H; gy += 64) { cx.beginPath(); cx.moveTo(0, gy); cx.lineTo(W, gy); cx.stroke(); }
-      var k = Math.min(W / 1024, H / 640), ox = (W - 1024 * k) / 2, oy = (H - 640 * k) / 2;
-      cx.setTransform(k, 0, 0, k, ox, oy);
-      var gold = '#F5B845', gold2 = '#FFD680', cream = '#FFF6E5', muted = 'rgba(214,205,240,0.75)', cyan = '#7FF0FF';
-      var HEB = "'Heebo','Assistant',Arial,sans-serif";
-      cx.direction = 'rtl'; cx.textBaseline = 'alphabetic';
-      // ניווט
-      cx.fillStyle = 'rgba(7,4,22,0.85)'; cx.fillRect(0, 0, 1024, 58);
-      cx.fillStyle = 'rgba(245,184,69,0.35)'; cx.fillRect(0, 58, 1024, 1);
-      if (logo.complete && logo.naturalWidth) { cx.save(); cx.beginPath(); cx.arc(986, 29, 17, 0, Math.PI * 2); cx.clip(); cx.drawImage(logo, 969, 12, 34, 34); cx.restore(); }
-      else { cx.fillStyle = gold; cx.beginPath(); cx.arc(986, 29, 15, 0, Math.PI * 2); cx.fill(); }
-      cx.textAlign = 'right'; cx.fillStyle = cream; cx.font = '900 16px ' + HEB; cx.fillText('AI ACADEMY', 958, 35);
-      cx.fillStyle = '#3ddc84'; cx.beginPath(); cx.arc(842, 30, 3.5, 0, Math.PI * 2); cx.fill();
-      cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText('ONLINE', 832, 34);
-      cx.font = '500 14px ' + HEB; cx.fillStyle = muted;
-      var links = ['הקורס החינמי', 'מה אני עושה', 'פרויקטים', 'הדרך לכאן'], lx = 700;
-      for (var i = 0; i < links.length; i++) { cx.fillText(links[i], lx, 35); lx -= cx.measureText(links[i]).width + 34; }
-      cx.fillStyle = gold; rr(24, 15, 140, 30, 15); cx.fill(); cx.fillStyle = '#1a1030'; cx.font = '700 13px ' + HEB; cx.textAlign = 'center'; cx.fillText('לקורס החינמי', 94, 35);
-      // גיבור — טקסט מימין
-      cx.textAlign = 'right';
-      cx.fillStyle = gold; cx.font = '700 13px ' + HEB; cx.fillText('AI ACADEMY · שחר פרודקשן', 972, 118);
-      cx.fillStyle = cream; cx.font = '900 66px ' + HEB; cx.fillText('שמוליק שחר', 975, 186);
-      cx.fillStyle = gold2; cx.font = '700 24px ' + HEB; cx.fillText('אני מלמד איך להתקדם בחיים ובעבודה —', 972, 228); cx.fillText('באמצעות בינה מלאכותית', 972, 260);
-      cx.fillStyle = muted; cx.font = '400 14px ' + HEB;
-      var sub = ['יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע. מתרגם טכנולוגיה', 'לשפה פשוטה — למעלה מעשר שנים של הדרכת דיגיטל, וארבע שנים', 'שבהן אני מכניס כלי AI לתוך העבודה היומיומית של אנשים ועסקים.'];
-      for (var s2 = 0; s2 < sub.length; s2++) cx.fillText(sub[s2], 972, 296 + s2 * 22);
-      cx.fillStyle = gold; rr(786, 372, 186, 40, 20); cx.fill(); cx.fillStyle = '#1a1030'; cx.font = '700 15px ' + HEB; cx.textAlign = 'center'; cx.fillText('לקורס ה-AI החינמי ←', 879, 398);
-      cx.strokeStyle = 'rgba(255,214,128,0.55)'; cx.lineWidth = 1.5; rr(666, 372, 104, 40, 20); cx.stroke(); cx.fillStyle = cream; cx.fillText('לדבר איתי', 718, 398);
-      cx.textAlign = 'right'; cx.font = '500 12px ' + HEB; cx.fillStyle = muted;
-      cx.strokeStyle = 'rgba(255,255,255,0.18)'; cx.lineWidth = 1; rr(760, 432, 212, 28, 14); cx.stroke(); cx.fillText('Google Gemini Certified Educator', 958, 451);
-      rr(580, 432, 168, 28, 14); cx.stroke(); cx.fillText('חבר NVIDIA Developer Group', 736, 451);
-      // אריחי טלמטריה
-      var tiles = [['הדרכת דיגיטל', '10+', 'שנים'], ['תלמידים', '1,800+', 'בהדרכות'], ['פרויקטים', '9', 'חיים'], ['שפות', '5', 'בקורס']];
-      for (var t2 = 0; t2 < tiles.length; t2++) {
-        var tx = 972 - t2 * 118 - 108;
-        cx.fillStyle = 'rgba(255,255,255,0.05)'; rr(tx, 486, 108, 82, 10); cx.fill();
-        cx.strokeStyle = 'rgba(245,184,69,0.35)'; cx.lineWidth = 1; rr(tx, 486, 108, 82, 10); cx.stroke();
-        cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText(tiles[t2][0], tx + 96, 506);
-        cx.fillStyle = gold; cx.font = '900 30px ' + HEB; cx.textAlign = 'left'; cx.direction = 'ltr'; cx.fillText(tiles[t2][1], tx + 12, 542); cx.direction = 'rtl'; cx.textAlign = 'right';
-        cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText(tiles[t2][2], tx + 96, 560);
-      }
-      // דיוקן משמאל
-      var px = 250, py = 330, pr = 132;
-      cx.strokeStyle = 'rgba(245,184,69,0.35)'; cx.setLineDash([6, 8]); cx.lineWidth = 1.5; cx.beginPath(); cx.arc(px, py, pr + 22, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]);
-      cx.strokeStyle = cyan; cx.lineWidth = 2; cx.globalAlpha = 0.55; cx.beginPath(); cx.arc(px, py, pr + 6, 0, Math.PI * 2); cx.stroke(); cx.globalAlpha = 1;
-      if (portrait.complete && portrait.naturalWidth) {
-        cx.save(); cx.beginPath(); cx.arc(px, py, pr, 0, Math.PI * 2); cx.clip();
-        var iw = portrait.naturalWidth, ih = portrait.naturalHeight, sc = Math.max(pr * 2 / iw, pr * 2 / ih);
-        cx.drawImage(portrait, px - iw * sc / 2, py - ih * sc / 2, iw * sc, ih * sc); cx.restore();
-      } else { cx.fillStyle = 'rgba(75,59,143,0.6)'; cx.beginPath(); cx.arc(px, py, pr, 0, Math.PI * 2); cx.fill(); }
-      cx.setTransform(1, 0, 0, 1, 0, 0);
-      tex.needsUpdate = true;
-    }
+    // לוח רקע כהה + מסגרת זהב. הדף האמיתי (DOM #page) מוקרן עליו בדיוק עם matrix3d — אין העתק, אין קרוספייד.
     var mat = new T.ShaderMaterial({
-      uniforms: { tPage: { value: tex }, uOpacity: { value: 0 }, uAspect: { value: innerWidth / innerHeight }, uGold: { value: new T.Color(0xF5B845) }, uTime: { value: 0 } },
+      uniforms: { uOpacity: { value: 0 }, uAspect: { value: VW() / VH() }, uGold: { value: new T.Color(0xF5B845) } },
       transparent: true, depthWrite: true, side: T.FrontSide,
       vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
       fragmentShader: [
-        'uniform sampler2D tPage; uniform float uOpacity,uAspect,uTime; uniform vec3 uGold; varying vec2 vUv;',
+        'uniform float uOpacity,uAspect; uniform vec3 uGold; varying vec2 vUv;',
         'void main(){',
-        '  vec4 p=texture2D(tPage,vUv);',
         '  float ax=min(vUv.x,1.0-vUv.x)*uAspect, ay=min(vUv.y,1.0-vUv.y);',
         '  float edge=min(ax,ay);',
         '  float corner=1.0-step(0.085,max(ax,ay));',
         '  float th=0.0075*(1.0+1.4*corner);',
         '  float border=1.0-smoothstep(th*0.6,th,edge);',
-        '  float scan=0.95+0.05*step(0.5,fract(vUv.y*200.0));',
-        '  vec3 col=p.rgb*scan;',
-        '  col=mix(col,uGold*1.9,border);',
-        '  float a=max(p.a,border);',
+        '  vec3 col=mix(vec3(0.043,0.027,0.133),uGold*1.9,border);',
+        '  float a=mix(0.74,1.0,border);',
         '  gl_FragColor=vec4(col,a*uOpacity);',
         '}'].join('\n')
     });
     var mesh = new T.Mesh(new T.PlaneGeometry(1, 1), mat);
     mesh.position.set(0, GY, GZ); mesh.scale.set(GH * camera.aspect, GH, 1); mesh.renderOrder = -1; mesh.frustumCulled = false;   // נצבע לפני השקופים האחרים וכותב עומק — חלון אל הדף, לא זכוכית
     scene.add(mesh);
-    var drawT = 0;
-    function refresh() { clearTimeout(drawT); drawT = setTimeout(function () { draw(innerWidth / innerHeight); mat.uniforms.uAspect.value = innerWidth / innerHeight; mesh.scale.x = GH * (innerWidth / innerHeight); }, 120); }
-    draw(innerWidth / innerHeight);
-    portrait.onload = refresh; logo.onload = refresh;
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
+    function refresh() { mat.uniforms.uAspect.value = VW() / VH(); mesh.scale.x = GH * (VW() / VH()); }
     return { mesh: mesh, mat: mat, refresh: refresh };
   })();
 
   /* =====================================================================
      פוסט-פרוסס משלנו: bloom + אברציה + vignette + גריין + הבזק
      ===================================================================== */
-  var W = Math.floor(innerWidth * DPR), H = Math.floor(innerHeight * DPR);
+  var W = Math.floor(VW() * DPR), H = Math.floor(VH() * DPR);
   var rtOpts = { type: T.HalfFloatType, minFilter: T.LinearFilter, magFilter: T.LinearFilter, depthBuffer: true, stencilBuffer: false };
   var rtScene = new T.WebGLRenderTarget(W, H, rtOpts);
   var half = { minFilter: T.LinearFilter, magFilter: T.LinearFilter, type: T.HalfFloatType, depthBuffer: false };
@@ -575,7 +505,7 @@
   }
 
   function resize() {
-    var w = innerWidth, h = innerHeight;
+    var w = VW(), h = VH();
     camera.aspect = w / h; camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
     W = Math.floor(w * DPR); H = Math.floor(h * DPR);
@@ -635,26 +565,44 @@
     if (landed) return;
     landed = true; landedAt = performance.now();
     hud.classList.add('gone');
-    body.classList.remove('flying'); body.classList.add('landed');
+    if (pageEl) { pageEl.style.transform = ''; pageEl.style.opacity = ''; }
+    body.classList.remove('flying'); body.classList.remove('docking'); body.classList.add('landed');
     window.scrollTo(0, 0);
     setTimeout(function () { hud.style.display = 'none'; }, 1500);
   }
 
-  /* ---------- כוונת נעילה על מסגרת הדף (DOM, לפי הקרנת פינות השער) ---------- */
-  var lockEl = document.getElementById('lock'), lockLbl = document.getElementById('lockl'), _c = new T.Vector3();
-  function updateLock(kCity) {
-    if (!lockEl) return;
+  /* ---------- הדף האמיתי טס לתוך המסך: הקרנת ארבע פינות השער → matrix3d על #page + כוונת נעילה ---------- */
+  var lockEl = document.getElementById('lock'), lockLbl = document.getElementById('lockl'), pageEl = document.getElementById('page'), _c = new T.Vector3();
+  // הומוגרפיה 2D → matrix3d (ארבע פינות יעד)
+  function adj3(m) { return [m[4] * m[8] - m[5] * m[7], m[2] * m[7] - m[1] * m[8], m[1] * m[5] - m[2] * m[4], m[5] * m[6] - m[3] * m[8], m[0] * m[8] - m[2] * m[6], m[2] * m[3] - m[0] * m[5], m[3] * m[7] - m[4] * m[6], m[1] * m[6] - m[0] * m[7], m[0] * m[4] - m[1] * m[3]]; }
+  function mm3(a, b) { var c = []; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) { var v = 0; for (var k = 0; k < 3; k++) v += a[3 * i + k] * b[3 * k + j]; c[3 * i + j] = v; } return c; }
+  function mv3(m, v) { return [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]]; }
+  function basis(x1, y1, x2, y2, x3, y3, x4, y4) { var m = [x1, x2, x3, y1, y2, y3, 1, 1, 1], v = mv3(adj3(m), [x4, y4, 1]); return mm3(m, [v[0], 0, 0, 0, v[1], 0, 0, 0, v[2]]); }
+  function homography(w, h, q) { // q: [tl, tr, bl, br] in px
+    var sBasis = basis(0, 0, w, 0, 0, h, w, h), d = basis(q[0][0], q[0][1], q[1][0], q[1][1], q[2][0], q[2][1], q[3][0], q[3][1]);
+    var t = mm3(d, adj3(sBasis)); for (var i = 0; i < 9; i++) t[i] /= t[8];
+    return 'matrix3d(' + [t[0], t[3], 0, t[6], t[1], t[4], 0, t[7], 0, 0, 1, 0, t[2], t[5], 0, t[8]].map(function (v) { return v.toFixed(6); }).join(',') + ')';
+  }
+  var corners = [[0, 0], [0, 0], [0, 0], [0, 0]];
+  function updateDock(kCity) {
     camera.updateMatrixWorld(); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
-    var hw = GH * camera.aspect / 2, hh = GH / 2, minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, behind = false;
+    var vw = VW(), vh = VH(), hw = GH * camera.aspect / 2, hh = GH / 2, behind = false;
+    var order = [[-hw, hh], [hw, hh], [-hw, -hh], [hw, -hh]];   // tl, tr, bl, br (world y למעלה)
     for (var i = 0; i < 4; i++) {
-      _c.set(i & 1 ? hw : -hw, GY + (i & 2 ? hh : -hh), GZ).project(camera);
+      _c.set(order[i][0], GY + order[i][1], GZ).project(camera);
       if (_c.z > 1) behind = true;
-      var sx = (_c.x + 1) / 2 * innerWidth, sy = (1 - _c.y) / 2 * innerHeight;
-      if (sx < minX) minX = sx; if (sx > maxX) maxX = sx; if (sy < minY) minY = sy; if (sy > maxY) maxY = sy;
+      corners[i][0] = (_c.x + 1) / 2 * vw; corners[i][1] = (1 - _c.y) / 2 * vh;
     }
+    var vis = behind ? 0 : Math.min(1, kCity * 1.4);
+    if (pageEl) {
+      pageEl.style.opacity = vis.toFixed(3);
+      if (vis > 0) pageEl.style.transform = homography(pageEl.offsetWidth || vw, pageEl.offsetHeight || vh, corners);
+    }
+    if (!lockEl) return;
+    var minX = Math.min(corners[0][0], corners[2][0]), maxX = Math.max(corners[1][0], corners[3][0]), minY = Math.min(corners[0][1], corners[1][1]), maxY = Math.max(corners[2][1], corners[3][1]);
     var w = maxX - minX, h = maxY - minY, cxp = (minX + maxX) / 2, cyp = (minY + maxY) / 2;
-    if (w < 56) { var asp = camera.aspect; w = 56; h = 56 / asp; }
-    var fill = w / innerWidth;
+    if (w < 56) { w = 56; h = 56 / camera.aspect; }
+    var fill = w / vw;
     var op = behind ? 0 : Math.min(1, (kCity - 0.15) * 4) * Math.max(0, Math.min(1, (0.9 - fill) / 0.12));
     lockEl.style.opacity = op.toFixed(3);
     lockEl.style.transform = 'translate(' + (cxp - w / 2).toFixed(1) + 'px,' + (cyp - h / 2).toFixed(1) + 'px)';
@@ -734,10 +682,9 @@
     if (kCity > 0) updateStreams(dt);
 
     /* --- שער הנחיתה: הולוגרמת הדף מתבהרת מהפריצה מהעננים ונמוגה כשהדף האמיתי נכנס --- */
-    gate.mat.uniforms.uTime.value = time;
-    var gateOut = landed ? Math.min(1, idleT / 1.4) : 0; gateOut = gateOut * gateOut * (3 - 2 * gateOut);
+    var gateOut = landed ? Math.max(0, Math.min(1, (idleT - 0.2) / 2.6)) : 0; gateOut = gateOut * gateOut * (3 - 2 * gateOut);   // אותו תזמון של #scrim
     gate.mat.uniforms.uOpacity.value = Math.min(1, kCity * 1.4) * (1 - gateOut);
-    if (!landed) updateLock(kCity);
+    if (!landed) { updateDock(kCity); if (kCity > 0.2 && !body.classList.contains('docking')) body.classList.add('docking'); }
 
     /* --- ברקים בתוך העננים --- */
     /* טיסה חלקה — בלי ברקים */
@@ -769,7 +716,7 @@
       _ndc.copy(_sunW).project(camera);
       var inFront = _ndc.z < 1 && Math.abs(_ndc.x) < 1.4 && Math.abs(_ndc.y) < 1.4;
       var vis = inFront ? (1 - kCloud * 0.9) * (1 - kCity * 0.6) * Math.max(0, 1 - Math.max(Math.abs(_ndc.x), Math.abs(_ndc.y)) * 0.6) : 0;
-      var sxp = (_ndc.x + 1) / 2 * innerWidth, syp = (1 - _ndc.y) / 2 * innerHeight, cx = innerWidth / 2, cy = innerHeight / 2;
+      var vw = VW(), vh = VH(); var sxp = (_ndc.x + 1) / 2 * vw, syp = (1 - _ndc.y) / 2 * vh, cx = vw / 2, cy = vh / 2;
       for (var f = 0; f < flares.length; f++) {
         var k = parseFloat(flares[f].dataset.k);
         flares[f].style.transform = 'translate(' + (sxp + (cx - sxp) * k) + 'px,' + (syp + (cy - syp) * k) + 'px) translate(-50%,-50%)';
@@ -785,7 +732,8 @@
   function start() {
     startT = 0; landed = false; capIdx = -1; shake = 0; flash = 0; roll = 0; rollV = 0; nextBolt = 0; touched = false;
     P.getPointAt(0, prevPos);
-    body.classList.add('flying'); body.classList.remove('landed');
+    body.classList.add('flying'); body.classList.remove('landed'); body.classList.remove('docking');
+    if (pageEl) { pageEl.style.opacity = '0'; }
     hud.style.display = ''; hud.classList.remove('gone');
     if (raf) cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);

@@ -34,7 +34,8 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:#0b0722;scrollbar-width:none}
+html::-webkit-scrollbar{width:0;height:0;display:none}  /* פס גלילה מותאם (#scrollbar) במקום הטבעי — כך רוחב הדף זהה בטיסה ואחרי הנחיתה */
 body{
   background:var(--deep); color:var(--cream);
   font-family:'Assistant',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -176,12 +177,12 @@ body.landed #vignette{opacity:.3}
 body.landed #scrim{opacity:1}
 
 /* ============ האתר ============ */
-#site{
-  position:relative;z-index:2;opacity:0;transform:translateY(26px);
-  transition:opacity 2.4s cubic-bezier(.22,.61,.36,1) .5s,transform 2.4s cubic-bezier(.16,1,.3,1) .5s;
-  pointer-events:none;
-}
-body.landed #site{opacity:1;transform:none;pointer-events:auto}
+/* #page = הניווט + האתר. בזמן הטיסה הוא שכבה קבועה בגודל המסך שמוקרנת ב-matrix3d על שער הנחיתה;
+   ברגע הנחיתה הטרנספורם הוא זהות בדיוק, ולכן המעבר לזרימה רגילה הוא ללא קפיצה. */
+body.flying #page{position:fixed;inset:0;z-index:1;overflow:hidden;transform-origin:0 0;will-change:transform,opacity;opacity:0;pointer-events:none;backface-visibility:hidden}
+body.flying #nav{display:block}
+#site{position:relative;z-index:2}
+body.flying #site{pointer-events:none}
 body.landed #sky{position:fixed;opacity:.85}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
 section{padding:clamp(56px,9vw,110px) 0;position:relative}
@@ -318,6 +319,7 @@ footer a:hover{color:var(--gold-2)}
 #nav{position:fixed;top:0;inset-inline:0;z-index:6;display:none;
   backdrop-filter:blur(14px);background:rgba(11,7,34,.72);border-bottom:1px solid var(--line-soft)}
 body.landed #nav{display:block}
+body.flying #nav{backdrop-filter:none}
 .nav-in{max-width:var(--maxw);margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .nav-in a.logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--cream);font-family:'Heebo';font-weight:900;font-size:14px;letter-spacing:.1em}
 .nav-in a.logo img{width:28px;height:28px;border-radius:50%}
@@ -379,6 +381,7 @@ body.landed #nav{display:block}
 <div id="scrollbar"><i></i></div>
 <div id="scan"></div>
 
+<div id="page">
 <nav id="nav">
   <div class="nav-in">
     <a class="logo" href="#hero"><img src="assets/logo.png" alt=""> AI ACADEMY <span class="sys"><i></i>ONLINE · <b id="clock">--:--:--</b></span></a>
@@ -595,6 +598,7 @@ body.landed #nav{display:block}
     </div>
   </footer>
 </main>
+</div>
 
 <script src="assets/three.min.js"></script>
 <script>
@@ -641,7 +645,7 @@ body.landed #nav{display:block}
   /* מונים בטלמטריה — רצים פעם אחת כשהגיבור נחשף */
   var counted = false;
   function runCounters(){
-    if (counted || !body.classList.contains('landed')) return; counted = true;
+    if (counted || !(body.classList.contains('landed') || body.classList.contains('docking'))) return; counted = true;
     document.querySelectorAll('.count').forEach(function(el){
       var to = parseInt(el.dataset.to, 10), t0 = performance.now(), dur = 1400 + Math.min(to, 1000);
       (function step(now){ var k = Math.min(1, (now - t0) / dur); k = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(to * k).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); })(t0);
