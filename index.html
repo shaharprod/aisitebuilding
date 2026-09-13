@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>שמוליק שחר · יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע</title>
+<meta name="description" content="יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע. מתרגם טכנולוגיה לשפה פשוטה — הטמעה, אוטומציות, סדנאות ובניית כלים. וגם: קורס AI בעברית, תשעה שיעורים, חינם.">
+<meta name="theme-color" content="#0b0722">
+<link rel="icon" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AI Academy · שמוליק שחר">
+<meta property="og:locale" content="he_IL">
+<meta property="og:url" content="https://aisitebuilding.com/">
+<meta property="og:title" content="שמוליק שחר · יועץ ומטמיע בינה מלאכותית">
+<meta property="og:description" content="הטמעת AI לעסקים ולבעלי מקצוע — ייעוץ, אוטומציות, סדנאות ובניית כלים. וגם קורס AI בעברית, חינם.">
+<meta property="og:image" content="https://aisitebuilding.com/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet:#1d1650; --deep:#0b0722; --haze:#4B3B8F;
+  --gold:#F5B845; --gold-2:#FFD680;
+  --cream:#F1ECFF; --muted:#A99FD6;
+  --green:#3ED598;
+  --card:rgba(255,255,255,.045);
+  --line:rgba(245,184,69,.22);
+  --line-soft:rgba(255,255,255,.09);
+  --maxw:1120px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--deep); color:var(--cream);
+  font-family:'Assistant',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:17px; line-height:1.7; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.num{font-family:'Heebo',system-ui,sans-serif;line-height:1.15;margin:0}
+a{color:var(--gold-2)}
+img{max-width:100%;display:block}
+
+/* ============ שלב הטיסה ============ */
+body.flying{overflow:hidden;height:100vh}
+#sky{position:fixed;inset:0;z-index:0;display:block;background:#03020c}
+#hud{
+  position:fixed;inset:0;z-index:5;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:max(18px,env(safe-area-inset-top)) 20px max(22px,env(safe-area-inset-bottom));
+  opacity:1;transition:opacity .7s ease;
+}
+#hud.gone{opacity:0}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.hud-brand{display:flex;align-items:center;gap:10px}
+.hud-brand img{width:34px;height:34px;border-radius:50%;box-shadow:0 0 22px rgba(245,184,69,.45)}
+.hud-brand b{font-family:'Heebo';font-weight:900;font-size:14px;letter-spacing:.14em;color:var(--gold-2)}
+.hud-read{text-align:left;direction:ltr;font-family:'Heebo';font-weight:700}
+.hud-read .num{font-size:clamp(22px,5vw,34px);color:var(--gold);text-shadow:0 0 18px rgba(245,184,69,.5);letter-spacing:.04em}
+.hud-read small{display:block;font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:500}
+.hud-bottom{display:flex;flex-direction:column;gap:14px;align-items:center}
+#caption{
+  font-family:'Heebo';font-weight:700;font-size:clamp(20px,4.6vw,34px);
+  text-align:center;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.75);
+  min-height:1.2em;transition:opacity .45s ease,transform .45s ease;
+}
+#caption.swap{opacity:0;transform:translateY(10px)}
+.bar{width:min(520px,82vw);height:3px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-2));box-shadow:0 0 14px rgba(245,184,69,.8)}
+#skip{
+  pointer-events:auto;cursor:pointer;background:rgba(10,6,30,.55);
+  border:1px solid var(--line);color:var(--cream);
+  font-family:'Heebo';font-weight:700;font-size:14px;
+  padding:9px 18px;border-radius:999px;backdrop-filter:blur(8px);
+  transition:background .2s,transform .2s;
+}
+#skip:hover{background:rgba(245,184,69,.16);transform:translateY(-1px)}
+#vignette{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:1;transition:opacity 1.2s ease;
+  background:radial-gradient(120% 80% at 50% 55%,transparent 35%,rgba(3,2,12,.55) 100%)}
+body.landed #vignette{opacity:.3}
+#scrim{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity 1.2s ease;
+  background:
+    linear-gradient(180deg,rgba(11,7,34,.55) 0%,rgba(11,7,34,.72) 55%,rgba(11,7,34,.95) 100%),
+    radial-gradient(80% 60% at 78% 12%,rgba(75,59,143,.35),transparent 70%)}
+body.landed #scrim{opacity:1}
+
+/* ============ האתר ============ */
+#site{
+  position:relative;z-index:2;opacity:0;transform:translateY(26px);
+  transition:opacity 1.1s ease,transform 1.1s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+body.landed #site{opacity:1;transform:none;pointer-events:auto}
+body.landed #sky{position:fixed;opacity:.85}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+section{padding:clamp(56px,9vw,110px) 0;position:relative}
+
+/* גיבור */
+#hero{min-height:100svh;display:flex;align-items:center;padding-top:80px;padding-bottom:60px}
+.hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(24px,5vw,60px);align-items:center}
+.eyebrow{font-family:'Heebo';font-weight:700;font-size:12px;letter-spacing:.22em;color:var(--gold);margin-bottom:18px}
+#hero h1{font-size:clamp(46px,10vw,96px);font-weight:900;letter-spacing:-.02em;
+  background:linear-gradient(180deg,#fff 20%,var(--gold-2) 130%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-role{font-family:'Heebo';font-weight:700;font-size:clamp(19px,3.4vw,28px);color:var(--gold-2);margin:14px 0 0}
+.hero-sub{color:var(--muted);font-size:clamp(16px,2.2vw,19px);margin:16px 0 0;max-width:52ch}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:30px}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+  font-family:'Heebo';font-weight:700;font-size:16px;
+  padding:14px 26px;border-radius:14px;transition:transform .18s,box-shadow .18s,background .18s;
+}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#231702;box-shadow:0 10px 34px rgba(245,184,69,.32)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(245,184,69,.42)}
+.btn-ghost{background:var(--card);border:1px solid var(--line-soft);color:var(--cream)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);transform:translateY(-2px)}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.badge{font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--line-soft);
+  padding:7px 14px;border-radius:999px}
+.badge b{color:var(--cream);font-weight:600}
+.portrait{position:relative;justify-self:center}
+.portrait img{width:min(280px,62vw);aspect-ratio:1;object-fit:cover;border-radius:50%;
+  border:2px solid rgba(245,184,69,.35);box-shadow:0 0 0 10px rgba(245,184,69,.06),0 30px 80px rgba(0,0,0,.6)}
+.portrait .ring{position:absolute;inset:-22px;border-radius:50%;border:1px dashed rgba(245,184,69,.25);animation:spin 34s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scroll-hint{position:absolute;bottom:26px;right:50%;transform:translateX(50%);color:var(--muted);font-size:12px;letter-spacing:.18em;font-family:'Heebo';font-weight:700}
+.scroll-hint span{display:block;width:1px;height:34px;margin:8px auto 0;background:linear-gradient(180deg,var(--gold),transparent);animation:drop 1.8s ease-in-out infinite}
+@keyframes drop{0%,100%{opacity:.25;transform:scaleY(.5)}50%{opacity:1;transform:scaleY(1)}}
+
+/* כותרות מקטע */
+.sec-tag{font-family:'Heebo';font-weight:700;font-size:12px;letter-spacing:.2em;color:var(--gold);margin-bottom:14px}
+.sec-title{font-size:clamp(28px,5.4vw,48px);font-weight:900;letter-spacing:-.01em}
+.sec-lead{color:var(--muted);max-width:62ch;margin-top:14px;font-size:clamp(16px,2vw,18px)}
+
+/* קלפים */
+.cards{display:grid;gap:18px;margin-top:38px}
+.cols-2{grid-template-columns:repeat(2,1fr)}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-4{grid-template-columns:repeat(4,1fr)}
+.card{
+  background:var(--card);border:1px solid var(--line-soft);border-radius:20px;
+  padding:26px;transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s,background .25s;
+}
+.card:hover{transform:translateY(-5px);border-color:var(--line);background:rgba(255,255,255,.07)}
+.card h3{font-size:20px;font-weight:700;color:#fff;margin-bottom:10px}
+.card p{color:var(--muted);font-size:15.5px;margin:0}
+.card .ico{font-size:26px;margin-bottom:14px;display:block;filter:drop-shadow(0 0 14px rgba(245,184,69,.5))}
+
+/* המתנה — הקורס החינמי */
+#free{position:relative}
+.free-box{
+  border:1px solid var(--line);border-radius:26px;padding:clamp(26px,4.5vw,50px);
+  background:
+    radial-gradient(90% 120% at 85% 0%,rgba(245,184,69,.12),transparent 60%),
+    linear-gradient(180deg,rgba(75,59,143,.30),rgba(29,22,80,.35));
+  box-shadow:0 30px 90px rgba(0,0,0,.45);
+}
+.free-kicker{display:inline-flex;align-items:center;gap:8px;background:rgba(62,213,152,.12);
+  border:1px solid rgba(62,213,152,.35);color:var(--green);font-family:'Heebo';font-weight:700;
+  font-size:13px;padding:6px 14px;border-radius:999px}
+.free-box h2{font-size:clamp(26px,5vw,44px);font-weight:900;margin:18px 0 0}
+.free-box h2 em{font-style:normal;color:var(--gold-2)}
+.ticks{display:flex;gap:8px 22px;flex-wrap:wrap;margin-top:22px;color:var(--cream);font-size:15px}
+.ticks i{color:var(--green);font-style:normal;font-weight:700;margin-left:6px}
+.lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:28px}
+.lesson{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.22);border:1px solid var(--line-soft);
+  border-radius:12px;padding:11px 14px;font-size:15px}
+.lesson b{font-family:'Heebo';color:var(--gold);font-size:13px;min-width:20px}
+.langs{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.lang{background:rgba(255,255,255,.05);border:1px solid var(--line-soft);border-radius:999px;padding:6px 14px;font-size:14px;color:var(--muted)}
+.free-note{color:var(--muted);font-size:14px;margin-top:16px}
+
+/* פרויקטים */
+.proj{display:flex;flex-direction:column;gap:8px}
+.proj .tag{font-family:'Heebo';font-size:11px;letter-spacing:.16em;color:var(--gold);font-weight:700}
+
+/* פיסות */
+.pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:26px}
+.pill{background:rgba(255,255,255,.05);border:1px solid var(--line-soft);border-radius:999px;
+  padding:7px 15px;font-size:14px;color:var(--cream);transition:border-color .2s,transform .2s}
+.pill:hover{border-color:var(--line);transform:translateY(-2px)}
+
+/* תעודות */
+.certs{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
+.certs figure{margin:0;background:var(--card);border:1px solid var(--line-soft);border-radius:16px;
+  overflow:hidden;transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s}
+.certs figure:hover{transform:translateY(-5px);border-color:var(--line)}
+.certs img{width:100%;aspect-ratio:4/3;object-fit:contain;cursor:zoom-in;background:#f6f4ff;padding:8px}
+.certs figcaption{padding:11px 14px;font-size:13.5px;color:var(--muted);text-align:center}
+#lightbox{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+  background:rgba(3,2,12,.92);backdrop-filter:blur(6px);padding:24px}
+#lightbox.on{display:flex}
+#lightbox img{max-width:min(1000px,94vw);max-height:88vh;width:auto;border-radius:14px;
+  box-shadow:0 40px 120px rgba(0,0,0,.7)}
+#lightbox button{position:absolute;top:18px;inset-inline-start:18px;background:rgba(255,255,255,.08);
+  border:1px solid var(--line-soft);color:var(--cream);font-size:22px;line-height:1;
+  width:44px;height:44px;border-radius:50%;cursor:pointer}
+#lightbox button:hover{background:rgba(245,184,69,.18)}
+
+/* ציר זמן */
+.timeline{margin-top:40px;position:relative;padding-inline-start:26px}
+.timeline::before{content:'';position:absolute;inset-inline-start:6px;top:6px;bottom:6px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--line),transparent)}
+.tl{position:relative;padding:0 0 26px}
+.tl::before{content:'';position:absolute;inset-inline-start:-24px;top:9px;width:9px;height:9px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 0 4px rgba(245,184,69,.14)}
+.tl b{font-family:'Heebo';color:var(--gold-2);font-size:15px;letter-spacing:.06em;display:block}
+.tl span{color:var(--muted);font-size:15.5px}
+
+/* יצירת קשר */
+#contact .free-box{text-align:center}
+.contact-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:28px}
+
+/* פוטר */
+footer{border-top:1px solid var(--line-soft);padding:40px 0 60px;text-align:center;color:var(--muted);font-size:14px}
+footer .credit{color:var(--cream);font-family:'Heebo';font-weight:700;font-size:15px;margin-bottom:10px}
+footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line-soft)}
+footer a:hover{color:var(--gold-2)}
+.replay{margin-top:22px;background:none;border:1px solid var(--line);color:var(--gold-2);
+  font-family:'Heebo';font-weight:700;font-size:14px;padding:10px 20px;border-radius:999px;cursor:pointer}
+.replay:hover{background:rgba(245,184,69,.12)}
+
+/* גילוי בגלילה */
+.rise{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.16,1,.3,1)}
+.rise.in{opacity:1;transform:none}
+
+/* ניווט צף */
+#nav{position:fixed;top:0;inset-inline:0;z-index:6;display:none;
+  backdrop-filter:blur(14px);background:rgba(11,7,34,.72);border-bottom:1px solid var(--line-soft)}
+body.landed #nav{display:block}
+.nav-in{max-width:var(--maxw);margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.nav-in a.logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--cream);font-family:'Heebo';font-weight:900;font-size:14px;letter-spacing:.1em}
+.nav-in a.logo img{width:28px;height:28px;border-radius:50%}
+.nav-links{display:flex;gap:22px}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:15px;font-family:'Heebo';font-weight:500}
+.nav-links a:hover{color:var(--gold-2)}
+.nav-cta{font-size:14px;padding:9px 18px}
+
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:1fr;text-align:center}
+  .portrait{order:-1}
+  .hero-sub{margin-inline:auto}
+  .cta-row,.badges{justify-content:center}
+  .cols-4{grid-template-columns:repeat(2,1fr)}
+  .cols-3{grid-template-columns:repeat(2,1fr)}
+  .certs{grid-template-columns:repeat(2,1fr)}
+  .lessons{grid-template-columns:repeat(2,1fr)}
+  .nav-links{display:none}
+}
+@media (max-width:560px){
+  .cols-2,.cols-3,.cols-4,.certs{grid-template-columns:1fr}
+  .lessons{grid-template-columns:1fr}
+  body{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body class="flying">
+
+<canvas id="sky"></canvas>
+<div id="scrim"></div>
+<div id="vignette"></div>
+
+<div id="hud">
+  <div class="hud-top">
+    <div class="hud-brand">
+      <img src="assets/logo.png" alt="AI Academy">
+      <b>AISITEBUILDING</b>
+    </div>
+    <div class="hud-read">
+      <div class="num" id="alt">38,000</div>
+      <small>ALTITUDE · FT</small>
+    </div>
+  </div>
+  <div class="hud-bottom">
+    <div id="caption">מתניעים מנועים…</div>
+    <div class="bar"><i id="barfill"></i></div>
+    <button id="skip">דלג לנחיתה ←</button>
+  </div>
+</div>
+
+<nav id="nav">
+  <div class="nav-in">
+    <a class="logo" href="#hero"><img src="assets/logo.png" alt=""> AI ACADEMY</a>
+    <div class="nav-links">
+      <a href="#free">הקורס החינמי</a>
+      <a href="#services">מה אני עושה</a>
+      <a href="#projects">פרויקטים</a>
+      <a href="#story">הדרך לכאן</a>
+    </div>
+    <a class="btn btn-gold nav-cta" href="https://shaharprod.github.io/RAVMESER/lead.html">לקורס החינמי</a>
+  </div>
+</nav>
+
+<main id="site">
+
+  <!-- ===== גיבור ===== -->
+  <section id="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">AI ACADEMY · שחר פרודקשן</div>
+          <h1>שמוליק שחר</h1>
+          <p class="hero-role">יועץ ומטמיע בינה מלאכותית<br>לעסקים ולבעלי מקצוע</p>
+          <p class="hero-sub">מתרגם טכנולוגיה לשפה פשוטה. למעלה מעשר שנים של הדרכת דיגיטל, וארבע שנים שבהן אני לוקח כלי בינה מלאכותית ומכניס אותם לתוך העבודה היומיומית של עסקים — בלי ז׳רגון ובלי הבטחות באוויר.</p>
+          <div class="cta-row">
+            <a class="btn btn-gold" href="https://shaharprod.github.io/RAVMESER/lead.html">לקורס ה-AI החינמי ←</a>
+            <a class="btn btn-ghost" href="#contact">לדבר איתי</a>
+          </div>
+          <div class="badges">
+            <span class="badge"><b>Google</b> Gemini Certified Educator</span>
+            <span class="badge">חבר <b>NVIDIA Developer Group</b></span>
+            <span class="badge">למעלה מ־<b>1,000</b> תלמידים בהדרכות</span>
+          </div>
+        </div>
+        <div class="portrait">
+          <div class="ring"></div>
+          <img src="assets/portrait.jpg" alt="שמוליק שחר">
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">גללו<span></span></div>
+  </section>
+
+  <!-- ===== הקורס החינמי ===== -->
+  <section id="free">
+    <div class="wrap">
+      <div class="free-box rise">
+        <span class="free-kicker">✦ יש דבר כזה חינם</span>
+        <h2>קורס בינה מלאכותית בעברית.<br><em>תשעה שיעורים, מהתחלה.</em></h2>
+        <p class="sec-lead">בלי ידע קודם, בלי קוד ובלי התקנות. מתחילים במה זה AI בכלל, ומגיעים עד לנסח בקשה שמחזירה תשובה שאפשר להשתמש בה — בקצב שלכם, עם מעקב התקדמות.</p>
+        <div class="ticks">
+          <span><i>✓</i>הכל בעברית</span>
+          <span><i>✓</i>בלי ידע קודם</span>
+          <span><i>✓</i>בלי קוד והתקנות</span>
+          <span><i>✓</i>בלי כרטיס אשראי</span>
+        </div>
+        <div class="lessons">
+          <div class="lesson"><b>1</b> מבוא ל-AI</div>
+          <div class="lesson"><b>2</b> ההיסטוריה של AI</div>
+          <div class="lesson"><b>3</b> למידת מכונה</div>
+          <div class="lesson"><b>4</b> AI בחיי היומיום</div>
+          <div class="lesson"><b>5</b> כלים מעשיים</div>
+          <div class="lesson"><b>6</b> הנדסת הנחייה</div>
+          <div class="lesson"><b>7</b> אתיקה ב-AI</div>
+          <div class="lesson"><b>8</b> העתיד של AI</div>
+          <div class="lesson"><b>9</b> מילון · יותר מ־100 מונחים</div>
+        </div>
+        <div class="langs">
+          <span class="lang">עברית</span><span class="lang">English</span>
+          <span class="lang">العربية</span><span class="lang">हिन्दी</span><span class="lang">Русский</span>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-gold" href="https://shaharprod.github.io/RAVMESER/lead.html">קחו אותי לקורס החינמי ←</a>
+        </div>
+        <p class="free-note">הגישה מגיעה למייל תוך דקה. בלי התחייבות ובלי שיחת מכירה — ואפשר להסיר את עצמכם בקליק אחד.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== מה אני עושה ===== -->
+  <section id="services">
+    <div class="wrap">
+      <div class="rise">
+        <div class="sec-tag">מה אני עושה לעסקים</div>
+        <h2 class="sec-title">לא הרצאה על העתיד — שינוי בעבודה של מחר בבוקר</h2>
+        <p class="sec-lead">אני נכנס לעסק, מסתכל על מה שבאמת לוקח זמן, ובונה את הפתרון שמתאים לו. ייעוץ, אפיון ובניית כלים — מתומחר לפי הפרויקט.</p>
+      </div>
+      <div class="cards cols-4">
+        <div class="card rise"><span class="ico">◎</span><h3>הטמעת AI בעסק</h3><p>מיפוי התהליכים שאפשר לקצר, בחירת הכלים הנכונים, והכנסתם לשגרה — עם ליווי עד שזה עובד לבד.</p></div>
+        <div class="card rise"><span class="ico">⚙</span><h3>אוטומציות וסוכנים</h3><p>חיבור בין המערכות הקיימות: מיילים, טפסים, גיליונות, CRM ו-ERP. מה שנעשה ידנית — נעשה לבד.</p></div>
+        <div class="card rise"><span class="ico">◇</span><h3>סדנאות והדרכות</h3><p>קורסים וסדנאות מותאמים לצוות — לעובדים, למורים או לבעלי מקצוע. מהיסודות ועד הנדסת הנחייה.</p></div>
+        <div class="card rise"><span class="ico">▣</span><h3>בניית כלים ומערכות</h3><p>דשבורדים, צ׳אטבוטים, מערכות נוכחות ומלאי, סורקי מסמכים — נבנים במיוחד לצורך שלכם.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== פרויקטים ===== -->
+  <section id="projects">
+    <div class="wrap">
+      <div class="rise">
+        <div class="sec-tag">פרויקטים</div>
+        <h2 class="sec-title">דברים שבניתי, ושרצים</h2>
+        <p class="sec-lead">חלק נבנו ללקוחות, חלק נולדו מתוך צורך שלי והפכו למוצר. כולם התחילו מאותה שאלה: מה כאן לוקח יותר מדי זמן?</p>
+      </div>
+      <div class="cards cols-3">
+        <div class="card proj rise"><span class="tag">PYTHON · FLASK</span><h3>מערכת שליטה קולית</h3><p>זיהוי דיבור וביצוע פקודות במחשב, דשבורד דינמי, מנוע דיבור עברי א-סינכרוני ומדדים חיים.</p></div>
+        <div class="card proj rise"><span class="tag">VOICE UI</span><h3>VoiceCode — פיתוח בקול</h3><p>בניית אתרים, אפליקציות ומשחקים באמצעות דיבור, עם ייצוא קוד וממשק אינטואיטיבי.</p></div>
+        <div class="card proj rise"><span class="tag">TTS · STT</span><h3>פלטפורמות קול בעברית</h3><p>הקראה בעברית בקולות טבעיים, ותמלול עברי מדויק עם תמיכה בניבים ועיבוד בזמן אמת.</p></div>
+        <div class="card proj rise"><span class="tag">SAAS</span><h3>ניהול מלאי ו-CRM</h3><p>מערכות משולבות לעסקים קטנים, עם ממשק פשוט וכלי דיווח מתקדמים.</p></div>
+        <div class="card proj rise"><span class="tag">CHATBOTS</span><h3>בוטים לשירות ולתקשורת פנים-ארגונית</h3><p>צ׳אטבוטים חכמים עם אינטגרציה למערכות הקיימות של הארגון.</p></div>
+        <div class="card proj rise"><span class="tag">COMPUTER VISION</span><h3>מודלים לזיהוי תמונה</h3><p>ארגון דאטהסט, אימון והרצה ב-Google Colab ו-Teachable Machine, והטמעה יישומית בכיתה.</p></div>
+        <div class="card proj rise"><span class="tag">GENERATIVE AI</span><h3>תוכן חזותי וקולי</h3><p>יצירת תמונה, וידאו ומוזיקה במודלים גנרטיביים, ובניית מערך תרגול ל-Generative AI יישומי.</p></div>
+        <div class="card proj rise"><span class="tag">VIDEO</span><h3>טלפרומפטר לסלפי</h3><p>פתרון טלפרומפטר להקלטות עצמיות, עם שליטה קולית וטקסט דינמי.</p></div>
+        <div class="card proj rise"><span class="tag">EDUCATION</span><h3>״העתיד כבר הווה״</h3><p>תוכניות לימוד AI לקהלים שונים — מתלמידי תיכון ועד אנשי מקצוע, עם דגש על למידה מעשית.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== כלים ===== -->
+  <section id="stack">
+    <div class="wrap">
+      <div class="rise">
+        <div class="sec-tag">ארגז הכלים</div>
+        <h2 class="sec-title">מה שיש לי ביד</h2>
+        <div class="pills">
+          <span class="pill">ChatGPT</span><span class="pill">Claude</span><span class="pill">Gemini</span>
+          <span class="pill">Perplexity</span><span class="pill">NotebookLM</span><span class="pill">Cursor</span>
+          <span class="pill">Claude Code</span><span class="pill">n8n</span><span class="pill">Google Colab</span>
+          <span class="pill">Teachable Machine</span><span class="pill">TensorFlow</span><span class="pill">Python</span>
+          <span class="pill">Flask</span><span class="pill">Apps Script</span><span class="pill">Midjourney</span>
+          <span class="pill">Stable Diffusion</span><span class="pill">ElevenLabs</span><span class="pill">Suno</span>
+          <span class="pill">Docker</span><span class="pill">GCP</span><span class="pill">Firebase</span><span class="pill">Railway</span>
+        </div>
+      </div>
+      <div class="rise" style="margin-top:52px">
+        <div class="sec-tag">הסמכות</div>
+        <h2 class="sec-title" style="font-size:clamp(24px,4vw,34px)">התעודות עצמן</h2>
+        <p class="sec-lead">לחיצה על תעודה פותחת אותה בגודל מלא.</p>
+      </div>
+      <div class="certs rise">
+        <figure><img src="assets/cert-gemini.jpeg" alt="תעודת הסמכה — Google Gemini Certified Educator" loading="lazy"><figcaption>Google · Gemini Certified Educator</figcaption></figure>
+        <figure><img src="assets/cert-nvidia.jpeg" alt="תעודת סיום — NVIDIA · AI for All: From Basics to GenAI Practice" loading="lazy"><figcaption>NVIDIA · ״AI for All: From Basics to GenAI Practice״</figcaption></figure>
+        <figure><img src="assets/cert-digital.jpeg" alt="תעודת הסמכה — המערך הדיגיטלי הלאומי" loading="lazy"><figcaption>המערך הדיגיטלי הלאומי · ״AI למתחילים״</figcaption></figure>
+        <figure><img src="assets/cert-general.jpeg" alt="כרטיס חבר — NVIDIA Developer Program" loading="lazy"><figcaption>NVIDIA Developer Program · חבר</figcaption></figure>
+      </div>
+      <div class="cta-row rise" style="justify-content:center;margin-top:34px">
+        <a class="btn btn-ghost" href="assets/portfolio-shmoolik-shachar.pdf" download="שמוליק שחר — פורטפוליו.pdf">↓ הפורטפוליו המלא כ-PDF</a>
+        <a class="btn btn-ghost" href="https://shaharprod.github.io/ai-education-platform/#/portfolio">לצפייה בפורטפוליו המקוון</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ציר זמן ===== -->
+  <section id="story">
+    <div class="wrap">
+      <div class="rise">
+        <div class="sec-tag">הדרך לכאן</div>
+        <h2 class="sec-title">מאולפן הקלטות ועד בינה מלאכותית</h2>
+        <p class="sec-lead">ארבעים שנה של עבודה עם טכנולוגיה שמשרתת אנשים — קודם צליל, אחר כך וידאו ואינטרנט, והיום בינה מלאכותית.</p>
+      </div>
+      <div class="timeline rise">
+        <div class="tl"><b>1983</b><span>הקמת אולפן ביתי להקלטות מוזיקה, קריינות ושירה.</span></div>
+        <div class="tl"><b>1990</b><span>טכנאי אולפן באולפני הקלטה בירושלים — סרט מגנטי, רב-ערוצי, סינון רעשים.</span></div>
+        <div class="tl"><b>1993</b><span>טכנאי רדיו, הקלטה, עריכה ושידור לחו״ל במרכז הרדיו של לשכת העיתונות הממשלתית.</span></div>
+        <div class="tl"><b>1999</b><span>תעודת מתכנת בשפת C — המחלקה הטכנולוגית, האוניברסיטה הפתוחה.</span></div>
+        <div class="tl"><b>2000</b><span>טכנאי שידור באולפני Jerusalem Post — שידור ותיאום פסקול מול תחנות בארה״ב.</span></div>
+        <div class="tl"><b><span dir="ltr" style="display:inline-block">2004–2009</span></b><span>ניתוח משפטי של הקלטות, סינון רעשים ובדיקת אמינות מול עורכי דין בכירים.</span></div>
+        <div class="tl"><b>2019</b><span>פיתוח תוכניות לימוד לאומנויות המופע ומולטימדיה — בית ספר ״אופק״ למחוננים, ירושלים.</span></div>
+        <div class="tl"><b>2021</b><span>יוזם הקמת אולפן הקלטות ומולטימדיה בבית הספר ״אופק״.</span></div>
+        <div class="tl"><b>2023</b><span>מוביל תחום בינה מלאכותית יוצרת בחינוך ובמדע.</span></div>
+        <div class="tl"><b>2024</b><span>בניית קורסים והשתלמויות למורים.</span></div>
+        <div class="tl"><b>2025</b><span>הטמעת בינה מלאכותית להתייעלות בעסקים ולבעלי מקצוע.</span></div>
+        <div class="tl"><b>2026</b><span>AI Academy — קורסים בעברית, כלים ואוטומציות, וליווי עסקים בהטמעה.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== יצירת קשר ===== -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="free-box rise">
+        <div class="sec-tag" style="margin-bottom:8px">יצירת קשר</div>
+        <h2 class="sec-title">יש לכם משהו בעסק שלוקח יותר מדי זמן?</h2>
+        <p class="sec-lead" style="margin-inline:auto">ספרו לי מה זה, ואומר לכם בכנות אם בינה מלאכותית פותרת את זה — ואיך.</p>
+        <div class="contact-row">
+          <a class="btn btn-gold" href="mailto:shaharprod@gmail.com">shaharprod@gmail.com</a>
+          <a class="btn btn-ghost" href="tel:+972522603831">052-2603831</a>
+          <a class="btn btn-ghost" href="https://whatsapp.com/channel/0029VbD64bG6BIEkkMpXzb08">ערוץ הוואטסאפ ←</a>
+        </div>
+        <div class="contact-row" style="margin-top:14px">
+          <a class="btn btn-ghost" href="https://www.instagram.com/shmoolik_shahar">אינסטגרם</a>
+          <a class="btn btn-ghost" href="https://www.tiktok.com/@samshahar">טיקטוק</a>
+          <a class="btn btn-ghost" href="https://shaharprod.github.io/ai-education-platform/#/portfolio">הפורטפוליו המלא</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="lightbox" role="dialog" aria-modal="true" aria-label="תעודה בגודל מלא">
+    <button type="button" id="lb-close" aria-label="סגירה">×</button>
+    <img id="lb-img" src="" alt="">
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="credit">שמוליק שחר · ייעוץ והטמעת בינה מלאכותית לעסקים ולבעלי מקצוע · SHAHAR AI PRODUCTIONS</div>
+      <div>© <span id="yr">2026</span> · כל הזכויות שמורות · <a href="https://shaharprod.github.io/RAVMESER/privacy.html">מדיניות פרטיות</a></div>
+      <button class="replay" id="replay">↻ לטוס שוב</button>
+    </div>
+  </footer>
+</main>
+
+<script src="assets/three.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  var body   = document.body;
+  var canvas = document.getElementById('sky');
+  var hud    = document.getElementById('hud');
+  var capEl  = document.getElementById('caption');
+  var altEl  = document.getElementById('alt');
+  var barEl  = document.getElementById('barfill');
+  var skipBtn= document.getElementById('skip');
+  var replay = document.getElementById('replay');
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DUR = 13500;                 // אורך הטיסה במילישניות
+  var landed = false, startT = 0, raf = 0;
+  var renderer, scene, camera, clock;
+  var stars, warp, clouds, towers, glows, windows, grid, runway, horizon;
+
+  /* ---------- נחיתה ---------- */
+  function land(){
+    if (landed) return;
+    landed = true;
+    hud.classList.add('gone');
+    body.classList.remove('flying');
+    body.classList.add('landed');
+    window.scrollTo(0,0);
+    setTimeout(function(){ hud.style.display = 'none'; }, 900);
+  }
+
+  skipBtn.addEventListener('click', land);
+  window.addEventListener('keydown', function(e){
+    if (!landed && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) land();
+  });
+
+  /* ---------- מסלול המצלמה ---------- */
+  var KEYS = [
+    {t:0.00, p:[   0, 240, 1500], l:[0, 200,   0], r: 0.00},
+    {t:0.20, p:[   0, 200,  980], l:[0, 150,   0], r: 0.05},
+    {t:0.38, p:[ -70, 150,  620], l:[0, 100, -60], r:-0.13},
+    {t:0.56, p:[  95,  95,  380], l:[0,  55, -60], r: 0.18},
+    {t:0.74, p:[  40,  48,  205], l:[0,  22, -80], r:-0.08},
+    {t:0.89, p:[  10,  17,   95], l:[0,   8,-120], r: 0.03},
+    {t:1.00, p:[   0, 2.6,   26], l:[0, 3.2,-260], r: 0.00}
+  ];
+  var CAPS = [
+    {t:0.00, s:'מתניעים מנועים…'},
+    {t:0.13, s:'ממריאים'},
+    {t:0.34, s:'נכנסים לאטמוספירה'},
+    {t:0.55, s:'מזהים את היעד'},
+    {t:0.76, s:'מתחילים ירידה'},
+    {t:0.93, s:'נוחתים'}
+  ];
+
+  function smooth(x){ return x*x*(3-2*x); }
+  function lerp(a,b,k){ return a + (b-a)*k; }
+
+  function sampleKeys(t){
+    var i = 0;
+    while (i < KEYS.length-2 && t > KEYS[i+1].t) i++;
+    var a = KEYS[i], b = KEYS[i+1];
+    var k = smooth(Math.min(1, Math.max(0, (t-a.t)/(b.t-a.t))));
+    return {
+      px:lerp(a.p[0],b.p[0],k), py:lerp(a.p[1],b.p[1],k), pz:lerp(a.p[2],b.p[2],k),
+      lx:lerp(a.l[0],b.l[0],k), ly:lerp(a.l[1],b.l[1],k), lz:lerp(a.l[2],b.l[2],k),
+      roll:lerp(a.r,b.r,k)
+    };
+  }
+
+  /* ---------- מרקם רך לעננים ---------- */
+  function softTexture(){
+    var c = document.createElement('canvas'); c.width = c.height = 128;
+    var g = c.getContext('2d');
+    var rg = g.createRadialGradient(64,64,0,64,64,64);
+    rg.addColorStop(0,'rgba(255,255,255,.85)');
+    rg.addColorStop(.35,'rgba(255,255,255,.30)');
+    rg.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle = rg; g.fillRect(0,0,128,128);
+    var tx = new THREE.CanvasTexture(c);
+    return tx;
+  }
+
+  /* ---------- בניית הסצנה ---------- */
+  function build(){
+    renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    renderer.setClearColor(0x03020c, 1);
+
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0b0722, 0.0);
+
+    camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.5, 6000);
+    clock = new THREE.Clock();
+
+    /* כוכבים */
+    var sN = 4200, sPos = new Float32Array(sN*3), sCol = new Float32Array(sN*3);
+    var cA = new THREE.Color(0xffffff), cB = new THREE.Color(0xF5B845), cC = new THREE.Color(0x8FA8FF);
+    for (var i=0;i<sN;i++){
+      sPos[i*3]   = (Math.random()-.5)*3600;
+      sPos[i*3+1] = (Math.random()-.5)*2400 + 200;
+      sPos[i*3+2] = (Math.random()-.5)*3600 - 200;
+      var c = Math.random()<.12 ? cB : (Math.random()<.2 ? cC : cA);
+      sCol[i*3]=c.r; sCol[i*3+1]=c.g; sCol[i*3+2]=c.b;
+    }
+    var sG = new THREE.BufferGeometry();
+    sG.setAttribute('position', new THREE.BufferAttribute(sPos,3));
+    sG.setAttribute('color', new THREE.BufferAttribute(sCol,3));
+    stars = new THREE.Points(sG, new THREE.PointsMaterial({
+      size:3.2, sizeAttenuation:true, vertexColors:true,
+      transparent:true, opacity:1, depthWrite:false, blending:THREE.AdditiveBlending
+    }));
+    scene.add(stars);
+
+    /* פסי מהירות (warp) */
+    var wN = 900, wPos = new Float32Array(wN*2*3), wSide = new Float32Array(wN*2);
+    for (var j=0;j<wN;j++){
+      var x = (Math.random()-.5)*900, y = (Math.random()-.5)*600 + 160, z = (Math.random()-.5)*2400;
+      wPos[j*6]=x;   wPos[j*6+1]=y;   wPos[j*6+2]=z;
+      wPos[j*6+3]=x; wPos[j*6+4]=y;   wPos[j*6+5]=z;
+      wSide[j*2]=0;  wSide[j*2+1]=1;
+    }
+    var wG = new THREE.BufferGeometry();
+    wG.setAttribute('position', new THREE.BufferAttribute(wPos,3));
+    wG.setAttribute('aSide', new THREE.BufferAttribute(wSide,1));
+    var wM = new THREE.ShaderMaterial({
+      uniforms:{ uLen:{value:0}, uOpacity:{value:0}, uColor:{value:new THREE.Color(0xCBD8FF)} },
+      vertexShader:
+        'attribute float aSide; uniform float uLen; void main(){ vec3 p = position; p.z += aSide*uLen; gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }',
+      fragmentShader:
+        'uniform vec3 uColor; uniform float uOpacity; void main(){ gl_FragColor = vec4(uColor, uOpacity); }',
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+    });
+    warp = new THREE.LineSegments(wG, wM);
+    scene.add(warp);
+
+    /* עננים */
+    var tex = softTexture();
+    var cN = 460, cPos = new Float32Array(cN*3), cScale = new Float32Array(cN);
+    for (var k=0;k<cN;k++){
+      cPos[k*3]   = (Math.random()-.5)*1400;
+      cPos[k*3+1] = 90 + Math.random()*190;
+      cPos[k*3+2] = (Math.random()-.5)*1600 - 100;
+      cScale[k] = 60 + Math.random()*150;
+    }
+    var cG = new THREE.BufferGeometry();
+    cG.setAttribute('position', new THREE.BufferAttribute(cPos,3));
+    cG.setAttribute('aScale', new THREE.BufferAttribute(cScale,1));
+    clouds = new THREE.Points(cG, new THREE.PointsMaterial({
+      size:150, sizeAttenuation:true, map:tex, color:0x7B6BC9,
+      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
+    }));
+    scene.add(clouds);
+
+    /* העיר — מגדלים */
+    var tN = 420;
+    var box = new THREE.BoxGeometry(1,1,1);
+    towers = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({color:0x120c33}), tN);
+    glows  = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({
+      color:0x4B3B8F, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
+    }), tN);
+    var m = new THREE.Matrix4(), q = new THREE.Quaternion();
+    var wPts = [], wCols = [];
+    var goldC = new THREE.Color(0xF5B845), cyanC = new THREE.Color(0x7FE9FF), creamC = new THREE.Color(0xFFF0C9);
+    for (var n=0;n<tN;n++){
+      var side = Math.random()<.5 ? -1 : 1;
+      var tx = side * (34 + Math.pow(Math.random(),.7)*420);
+      var tz = -900 + Math.random()*1500;
+      var h  = 18 + Math.pow(Math.random(),2.2)*220;
+      var w  = 10 + Math.random()*22, d = 10 + Math.random()*22;
+      m.compose(new THREE.Vector3(tx, h/2, tz), q, new THREE.Vector3(w,h,d));
+      towers.setMatrixAt(n, m);
+      m.compose(new THREE.Vector3(tx, h/2, tz), q, new THREE.Vector3(w*1.22, h*1.02, d*1.22));
+      glows.setMatrixAt(n, m);
+      /* חלונות */
+      var rows = Math.max(2, Math.floor(h/16));
+      for (var r=0;r<rows;r++){
+        if (Math.random()<.42) continue;
+        var wc = Math.random()<.22 ? cyanC : (Math.random()<.5 ? goldC : creamC);
+        wPts.push(tx + (Math.random()-.5)*w*0.9, 8 + r*14 + Math.random()*4, tz + (side>0?-1:1)*d*0.5);
+        wCols.push(wc.r, wc.g, wc.b);
+      }
+    }
+    towers.instanceMatrix.needsUpdate = true;
+    glows.instanceMatrix.needsUpdate = true;
+    towers.visible = false; glows.visible = false;
+    scene.add(towers); scene.add(glows);
+
+    var wgG = new THREE.BufferGeometry();
+    wgG.setAttribute('position', new THREE.Float32BufferAttribute(wPts,3));
+    wgG.setAttribute('color', new THREE.Float32BufferAttribute(wCols,3));
+    windows = new THREE.Points(wgG, new THREE.PointsMaterial({
+      size:3.4, sizeAttenuation:true, vertexColors:true, map:tex,
+      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
+    }));
+    scene.add(windows);
+
+    /* רשת קרקע */
+    grid = new THREE.GridHelper(3000, 120, 0xF5B845, 0x3A2E78);
+    grid.material.transparent = true; grid.material.opacity = 0; grid.material.depthWrite = false;
+    grid.position.y = 0.02;
+    scene.add(grid);
+
+    /* מסלול נחיתה */
+    var rPts = [], rCols = [], rg1 = new THREE.Color(0xF5B845), rg2 = new THREE.Color(0xFFFFFF);
+    for (var z=60; z>-1200; z-=26){
+      for (var s=-1;s<=1;s+=2){
+        rPts.push(s*15, 0.6, z);
+        var cc = (Math.abs(z)%156 < 26) ? rg2 : rg1;
+        rCols.push(cc.r, cc.g, cc.b);
+      }
+    }
+    var rG = new THREE.BufferGeometry();
+    rG.setAttribute('position', new THREE.Float32BufferAttribute(rPts,3));
+    rG.setAttribute('color', new THREE.Float32BufferAttribute(rCols,3));
+    runway = new THREE.Points(rG, new THREE.PointsMaterial({
+      size:5.2, sizeAttenuation:true, vertexColors:true, map:tex,
+      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
+    }));
+    scene.add(runway);
+
+    /* זוהר אופק */
+    var hMat = new THREE.SpriteMaterial({
+      map: tex, color:0xF5B845, transparent:true, opacity:0,
+      depthWrite:false, blending:THREE.AdditiveBlending
+    });
+    horizon = new THREE.Sprite(hMat);
+    horizon.scale.set(1600, 520, 1);
+    horizon.position.set(0, 30, -1250);
+    scene.add(horizon);
+
+    window.addEventListener('resize', onResize);
+    return true;
+  }
+
+  function onResize(){
+    if (!renderer) return;
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+  }
+
+  /* ---------- אנימציה ---------- */
+  var capIdx = -1;
+  function setCaption(i){
+    if (i === capIdx) return;
+    capIdx = i;
+    capEl.classList.add('swap');
+    setTimeout(function(){ capEl.textContent = CAPS[i].s; capEl.classList.remove('swap'); }, 260);
+  }
+
+  var skyA = new THREE.Color(0x03020c), skyB = new THREE.Color(0x1a1147), skyC = new THREE.Color(0x2c1f66);
+  var tmpC = new THREE.Color();
+
+  function frame(now){
+    raf = requestAnimationFrame(frame);
+    if (!startT) startT = now;
+    var elapsed = now - startT;
+    var t = Math.min(1, elapsed / DUR);
+    var idle = landed ? Math.max(0, (elapsed - DUR)/1000) : 0;
+    var dim  = landed ? 0.42 : 1;      /* אחרי הנחיתה הרקע נרגע כדי שהטקסט יהיה קריא */
+
+    /* מצלמה */
+    var s = sampleKeys(t);
+    var bob   = landed ? Math.sin(idle*0.45)*0.5 : 0;
+    var sway  = landed ? Math.sin(idle*0.26)*2.6 : 0;
+    var drift = landed ? 16*(1-Math.exp(-idle/35)) : 0;   /* נדידה עדינה שלא בורחת */
+    camera.position.set(s.px + sway, s.py + bob, s.pz - drift);
+    camera.lookAt(s.lx, s.ly, s.lz - drift);
+    camera.rotation.z = s.roll * (1 - t*0.2);
+
+    /* שמיים וערפל */
+    if (t < 0.45) tmpC.copy(skyA).lerp(skyB, t/0.45);
+    else          tmpC.copy(skyB).lerp(skyC, Math.min(1,(t-0.45)/0.55));
+    renderer.setClearColor(tmpC, 1);
+    scene.fog.color.copy(tmpC);
+    scene.fog.density = 0.00042 * smooth(Math.min(1, Math.max(0,(t-0.25)/0.6)));
+
+    /* פסי מהירות */
+    var speed = Math.sin(Math.min(1,t/0.62) * Math.PI);
+    warp.material.uniforms.uLen.value = 6 + speed*130;
+    warp.material.uniforms.uOpacity.value = Math.max(0, speed*0.5 - Math.max(0,(t-0.55))*0.9);
+    warp.position.z = (t*2600) % 400;
+
+    /* כוכבים */
+    stars.material.opacity = Math.max(0, 1 - Math.max(0,(t-0.30))/0.30);
+    stars.rotation.z = t*0.05;
+
+    /* עננים */
+    var cf = Math.max(0, Math.min(1, (t-0.26)/0.16)) * Math.max(0, 1 - Math.max(0,(t-0.62))/0.22);
+    clouds.material.opacity = cf*0.55;
+    clouds.rotation.y = t*0.12;
+
+    /* עיר */
+    var city = Math.max(0, Math.min(1, (t-0.40)/0.20));
+    towers.visible = glows.visible = city > 0.01;
+    glows.material.opacity  = city*0.32*dim;
+    windows.material.opacity= city*dim;
+    grid.material.opacity   = city*0.22*dim;
+
+    /* מסלול ואופק */
+    runway.material.opacity = Math.max(0, Math.min(1,(t-0.62)/0.22)) * (0.75 + 0.25*Math.sin(elapsed*0.006)) * dim;
+    horizon.material.opacity= Math.max(0, Math.min(1,(t-0.35)/0.4)) * 0.42;
+
+    /* HUD */
+    if (!landed){
+      var ft = Math.round(38000 * Math.pow(1-t, 1.7));
+      altEl.textContent = ft.toLocaleString('en-US');
+      barEl.style.width = (t*100).toFixed(1) + '%';
+      for (var i=CAPS.length-1;i>=0;i--){ if (t >= CAPS[i].t){ setCaption(i); break; } }
+      if (t >= 1) land();
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  /* ---------- הפעלה ---------- */
+  function start(){
+    startT = 0;
+    landed = false;
+    capIdx = -1;
+    body.classList.add('flying');
+    body.classList.remove('landed');
+    hud.style.display = '';
+    hud.classList.remove('gone');
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+  }
+
+  var ok = false;
+  if (!reduced && window.THREE){
+    try { ok = build(); } catch(e){ ok = false; }
+  }
+  if (ok){
+    start();
+  } else {
+    /* בלי WebGL או עם העדפת תנועה מופחתת — נכנסים ישר לאתר */
+    canvas.style.display = 'none';
+    document.getElementById('vignette').style.display = 'none';
+    hud.style.display = 'none';
+    body.classList.remove('flying');
+    body.classList.add('landed');
+    document.body.style.background =
+      'radial-gradient(90% 70% at 70% -10%, rgba(75,59,143,.55), transparent 60%), #0b0722';
+  }
+
+  replay.addEventListener('click', function(){
+    if (!ok) return;
+    window.scrollTo({top:0, behavior:'instant'});
+    start();
+  });
+
+  /* השהיית הרינדור כשלא צריך אותו — חיסכון בסוללה */
+  var heroSeen = true;
+  function pause(){ if (raf){ cancelAnimationFrame(raf); raf = 0; } }
+  function resume(){ if (ok && !raf && !document.hidden && (heroSeen || !landed)) raf = requestAnimationFrame(frame); }
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) pause(); else resume();
+  });
+
+  var heroIO = new IntersectionObserver(function(es){
+    heroSeen = es[0].isIntersecting;
+    if (heroSeen) resume(); else if (landed) pause();
+  }, {threshold:0});
+  heroIO.observe(document.getElementById('hero'));
+
+  /* תעודה בגודל מלא */
+  var lb = document.getElementById('lightbox'), lbImg = document.getElementById('lb-img');
+  function closeLb(){ lb.classList.remove('on'); document.body.style.overflow=''; }
+  document.querySelectorAll('.certs img').forEach(function(im){
+    im.addEventListener('click', function(){
+      lbImg.src = im.getAttribute('src'); lbImg.alt = im.getAttribute('alt') || '';
+      lb.classList.add('on'); document.body.style.overflow='hidden';
+    });
+  });
+  lb.addEventListener('click', function(e){ if (e.target === lb || e.target.id === 'lb-close') closeLb(); });
+  window.addEventListener('keydown', function(e){ if (e.key === 'Escape' && lb.classList.contains('on')) closeLb(); });
+
+  /* גילוי בגלילה — עם רשת ביטחון: אם משהו לא נצפה, הוא נחשף בכל זאת */
+  var risers = Array.prototype.slice.call(document.querySelectorAll('.rise'));
+  var io = null;
+  if ('IntersectionObserver' in window){
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, {threshold:0.05, rootMargin:'0px 0px -30px 0px'});
+    risers.forEach(function(el, i){
+      el.style.transitionDelay = (Math.min(i,5)*50) + 'ms';
+      io.observe(el);
+    });
+  }
+  function revealVisible(){
+    risers.forEach(function(el){
+      if (el.classList.contains('in')) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight*0.96 && r.bottom > 0){
+        el.classList.add('in');
+        if (io) io.unobserve(el);
+      }
+    });
+  }
+  window.addEventListener('scroll', revealVisible, {passive:true});
+  window.addEventListener('resize', revealVisible);
+  setInterval(revealVisible, 600);
+})();
+</script>
+</body>
+</html>
