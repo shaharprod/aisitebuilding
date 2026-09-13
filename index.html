@@ -79,6 +79,18 @@ body.flying{overflow:hidden;height:100vh}
   transition:background .2s,transform .2s;
 }
 #skip:hover{background:rgba(245,184,69,.16);transform:translateY(-1px)}
+
+/* קוקפיט */
+.hud-read .num.sm{font-size:clamp(15px,3vw,20px);color:var(--cream);margin-top:6px;text-shadow:none}
+#horizon{position:absolute;left:50%;top:50%;width:min(70vw,720px);height:2px;margin-left:calc(min(70vw,720px)/-2);
+  display:flex;align-items:center;gap:22%;opacity:.55;pointer-events:none;transition:opacity .6s}
+#horizon i{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,214,128,.9),transparent)}
+#horizon b{width:12px;height:12px;border:1px solid rgba(255,214,128,.9);border-radius:50%;box-shadow:0 0 12px rgba(245,184,69,.6)}
+#flares{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.flare{position:absolute;left:0;top:0;width:90px;height:90px;border-radius:50%;opacity:0;will-change:transform,opacity;
+  background:radial-gradient(circle,rgba(255,214,128,.55) 0%,rgba(255,170,90,.18) 45%,transparent 70%);mix-blend-mode:screen}
+.flare.big{width:260px;height:260px;background:radial-gradient(circle,rgba(150,200,255,.25) 0%,rgba(255,180,100,.12) 40%,transparent 68%)}
+body.landed #flares{display:none}
 #vignette{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:1;transition:opacity 1.2s ease;
   background:radial-gradient(120% 80% at 50% 55%,transparent 35%,rgba(3,2,12,.55) 100%)}
 body.landed #vignette{opacity:.3}
@@ -267,6 +279,7 @@ body.landed #nav{display:block}
 <div id="scrim"></div>
 <div id="vignette"></div>
 
+<div id="flares"><i class="flare" data-k="0.35" data-o="0.55"></i><i class="flare" data-k="0.62" data-o="0.35"></i><i class="flare" data-k="0.95" data-o="0.5"></i><i class="flare big" data-k="1.35" data-o="0.22"></i></div>
 <div id="hud">
   <div class="hud-top">
     <div class="hud-brand">
@@ -276,10 +289,13 @@ body.landed #nav{display:block}
     <div class="hud-read">
       <div class="num" id="alt">38,000</div>
       <small>ALTITUDE · FT</small>
+      <div class="num sm" id="spd">920</div>
+      <small>SPEED · KM/H</small>
     </div>
   </div>
+  <div id="horizon"><i></i><b></b><i></i></div>
   <div class="hud-bottom">
-    <div id="caption">מתניעים מנועים…</div>
+    <div id="caption">מתניעים…</div>
     <div class="bar"><i id="barfill"></i></div>
     <button id="skip">דלג לנחיתה ←</button>
   </div>
@@ -307,8 +323,8 @@ body.landed #nav{display:block}
         <div>
           <div class="eyebrow">AI ACADEMY · שחר פרודקשן</div>
           <h1>שמוליק שחר</h1>
-          <p class="hero-role">יועץ ומטמיע בינה מלאכותית<br>לעסקים ולבעלי מקצוע</p>
-          <p class="hero-sub">מתרגם טכנולוגיה לשפה פשוטה. למעלה מעשר שנים של הדרכת דיגיטל, וארבע שנים שבהן אני לוקח כלי בינה מלאכותית ומכניס אותם לתוך העבודה היומיומית של עסקים — בלי ז׳רגון ובלי הבטחות באוויר.</p>
+          <p class="hero-role">אני מלמד איך להתקדם בחיים ובעבודה —<br>באמצעות בינה מלאכותית</p>
+          <p class="hero-sub">יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע. מתרגם טכנולוגיה לשפה פשוטה — למעלה מעשר שנים של הדרכת דיגיטל, וארבע שנים שבהן אני מכניס כלי AI לתוך העבודה היומיומית של אנשים ועסקים, בלי ז׳רגון ובלי הבטחות באוויר.</p>
           <div class="cta-row">
             <a class="btn btn-gold" href="https://shaharprod.github.io/RAVMESER/lead.html">לקורס ה-AI החינמי ←</a>
             <a class="btn btn-ghost" href="#contact">לדבר איתי</a>
@@ -502,369 +518,20 @@ body.landed #nav{display:block}
 (function(){
   'use strict';
   document.getElementById('yr').textContent = new Date().getFullYear();
+  var body = document.body;
 
-  var body   = document.body;
-  var canvas = document.getElementById('sky');
-  var hud    = document.getElementById('hud');
-  var capEl  = document.getElementById('caption');
-  var altEl  = document.getElementById('alt');
-  var barEl  = document.getElementById('barfill');
-  var skipBtn= document.getElementById('skip');
-  var replay = document.getElementById('replay');
-
+  /* בלי WebGL / בלי THREE / העדפת תנועה מופחתת — ישר לאתר */
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var DUR = 13500;                 // אורך הטיסה במילישניות
-  var landed = false, startT = 0, raf = 0;
-  var renderer, scene, camera, clock;
-  var stars, warp, clouds, towers, glows, windows, grid, runway, horizon;
-
-  /* ---------- נחיתה ---------- */
-  function land(){
-    if (landed) return;
-    landed = true;
-    hud.classList.add('gone');
-    body.classList.remove('flying');
-    body.classList.add('landed');
-    window.scrollTo(0,0);
-    setTimeout(function(){ hud.style.display = 'none'; }, 900);
-  }
-
-  skipBtn.addEventListener('click', land);
-  window.addEventListener('keydown', function(e){
-    if (!landed && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) land();
-  });
-
-  /* ---------- מסלול המצלמה ---------- */
-  var KEYS = [
-    {t:0.00, p:[   0, 240, 1500], l:[0, 200,   0], r: 0.00},
-    {t:0.20, p:[   0, 200,  980], l:[0, 150,   0], r: 0.05},
-    {t:0.38, p:[ -70, 150,  620], l:[0, 100, -60], r:-0.13},
-    {t:0.56, p:[  95,  95,  380], l:[0,  55, -60], r: 0.18},
-    {t:0.74, p:[  40,  48,  205], l:[0,  22, -80], r:-0.08},
-    {t:0.89, p:[  10,  17,   95], l:[0,   8,-120], r: 0.03},
-    {t:1.00, p:[   0, 2.6,   26], l:[0, 3.2,-260], r: 0.00}
-  ];
-  var CAPS = [
-    {t:0.00, s:'מתניעים מנועים…'},
-    {t:0.13, s:'ממריאים'},
-    {t:0.34, s:'נכנסים לאטמוספירה'},
-    {t:0.55, s:'מזהים את היעד'},
-    {t:0.76, s:'מתחילים ירידה'},
-    {t:0.93, s:'נוחתים'}
-  ];
-
-  function smooth(x){ return x*x*(3-2*x); }
-  function lerp(a,b,k){ return a + (b-a)*k; }
-
-  function sampleKeys(t){
-    var i = 0;
-    while (i < KEYS.length-2 && t > KEYS[i+1].t) i++;
-    var a = KEYS[i], b = KEYS[i+1];
-    var k = smooth(Math.min(1, Math.max(0, (t-a.t)/(b.t-a.t))));
-    return {
-      px:lerp(a.p[0],b.p[0],k), py:lerp(a.p[1],b.p[1],k), pz:lerp(a.p[2],b.p[2],k),
-      lx:lerp(a.l[0],b.l[0],k), ly:lerp(a.l[1],b.l[1],k), lz:lerp(a.l[2],b.l[2],k),
-      roll:lerp(a.r,b.r,k)
-    };
-  }
-
-  /* ---------- מרקם רך לעננים ---------- */
-  function softTexture(){
-    var c = document.createElement('canvas'); c.width = c.height = 128;
-    var g = c.getContext('2d');
-    var rg = g.createRadialGradient(64,64,0,64,64,64);
-    rg.addColorStop(0,'rgba(255,255,255,.85)');
-    rg.addColorStop(.35,'rgba(255,255,255,.30)');
-    rg.addColorStop(1,'rgba(255,255,255,0)');
-    g.fillStyle = rg; g.fillRect(0,0,128,128);
-    var tx = new THREE.CanvasTexture(c);
-    return tx;
-  }
-
-  /* ---------- בניית הסצנה ---------- */
-  function build(){
-    renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.setClearColor(0x03020c, 1);
-
-    scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0b0722, 0.0);
-
-    camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.5, 6000);
-    clock = new THREE.Clock();
-
-    /* כוכבים */
-    var sN = 4200, sPos = new Float32Array(sN*3), sCol = new Float32Array(sN*3);
-    var cA = new THREE.Color(0xffffff), cB = new THREE.Color(0xF5B845), cC = new THREE.Color(0x8FA8FF);
-    for (var i=0;i<sN;i++){
-      sPos[i*3]   = (Math.random()-.5)*3600;
-      sPos[i*3+1] = (Math.random()-.5)*2400 + 200;
-      sPos[i*3+2] = (Math.random()-.5)*3600 - 200;
-      var c = Math.random()<.12 ? cB : (Math.random()<.2 ? cC : cA);
-      sCol[i*3]=c.r; sCol[i*3+1]=c.g; sCol[i*3+2]=c.b;
-    }
-    var sG = new THREE.BufferGeometry();
-    sG.setAttribute('position', new THREE.BufferAttribute(sPos,3));
-    sG.setAttribute('color', new THREE.BufferAttribute(sCol,3));
-    stars = new THREE.Points(sG, new THREE.PointsMaterial({
-      size:3.2, sizeAttenuation:true, vertexColors:true,
-      transparent:true, opacity:1, depthWrite:false, blending:THREE.AdditiveBlending
-    }));
-    scene.add(stars);
-
-    /* פסי מהירות (warp) */
-    var wN = 900, wPos = new Float32Array(wN*2*3), wSide = new Float32Array(wN*2);
-    for (var j=0;j<wN;j++){
-      var x = (Math.random()-.5)*900, y = (Math.random()-.5)*600 + 160, z = (Math.random()-.5)*2400;
-      wPos[j*6]=x;   wPos[j*6+1]=y;   wPos[j*6+2]=z;
-      wPos[j*6+3]=x; wPos[j*6+4]=y;   wPos[j*6+5]=z;
-      wSide[j*2]=0;  wSide[j*2+1]=1;
-    }
-    var wG = new THREE.BufferGeometry();
-    wG.setAttribute('position', new THREE.BufferAttribute(wPos,3));
-    wG.setAttribute('aSide', new THREE.BufferAttribute(wSide,1));
-    var wM = new THREE.ShaderMaterial({
-      uniforms:{ uLen:{value:0}, uOpacity:{value:0}, uColor:{value:new THREE.Color(0xCBD8FF)} },
-      vertexShader:
-        'attribute float aSide; uniform float uLen; void main(){ vec3 p = position; p.z += aSide*uLen; gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }',
-      fragmentShader:
-        'uniform vec3 uColor; uniform float uOpacity; void main(){ gl_FragColor = vec4(uColor, uOpacity); }',
-      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
-    });
-    warp = new THREE.LineSegments(wG, wM);
-    scene.add(warp);
-
-    /* עננים */
-    var tex = softTexture();
-    var cN = 460, cPos = new Float32Array(cN*3), cScale = new Float32Array(cN);
-    for (var k=0;k<cN;k++){
-      cPos[k*3]   = (Math.random()-.5)*1400;
-      cPos[k*3+1] = 90 + Math.random()*190;
-      cPos[k*3+2] = (Math.random()-.5)*1600 - 100;
-      cScale[k] = 60 + Math.random()*150;
-    }
-    var cG = new THREE.BufferGeometry();
-    cG.setAttribute('position', new THREE.BufferAttribute(cPos,3));
-    cG.setAttribute('aScale', new THREE.BufferAttribute(cScale,1));
-    clouds = new THREE.Points(cG, new THREE.PointsMaterial({
-      size:150, sizeAttenuation:true, map:tex, color:0x7B6BC9,
-      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
-    }));
-    scene.add(clouds);
-
-    /* העיר — מגדלים */
-    var tN = 420;
-    var box = new THREE.BoxGeometry(1,1,1);
-    towers = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({color:0x120c33}), tN);
-    glows  = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({
-      color:0x4B3B8F, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
-    }), tN);
-    var m = new THREE.Matrix4(), q = new THREE.Quaternion();
-    var wPts = [], wCols = [];
-    var goldC = new THREE.Color(0xF5B845), cyanC = new THREE.Color(0x7FE9FF), creamC = new THREE.Color(0xFFF0C9);
-    for (var n=0;n<tN;n++){
-      var side = Math.random()<.5 ? -1 : 1;
-      var tx = side * (34 + Math.pow(Math.random(),.7)*420);
-      var tz = -900 + Math.random()*1500;
-      var h  = 18 + Math.pow(Math.random(),2.2)*220;
-      var w  = 10 + Math.random()*22, d = 10 + Math.random()*22;
-      m.compose(new THREE.Vector3(tx, h/2, tz), q, new THREE.Vector3(w,h,d));
-      towers.setMatrixAt(n, m);
-      m.compose(new THREE.Vector3(tx, h/2, tz), q, new THREE.Vector3(w*1.22, h*1.02, d*1.22));
-      glows.setMatrixAt(n, m);
-      /* חלונות */
-      var rows = Math.max(2, Math.floor(h/16));
-      for (var r=0;r<rows;r++){
-        if (Math.random()<.42) continue;
-        var wc = Math.random()<.22 ? cyanC : (Math.random()<.5 ? goldC : creamC);
-        wPts.push(tx + (Math.random()-.5)*w*0.9, 8 + r*14 + Math.random()*4, tz + (side>0?-1:1)*d*0.5);
-        wCols.push(wc.r, wc.g, wc.b);
-      }
-    }
-    towers.instanceMatrix.needsUpdate = true;
-    glows.instanceMatrix.needsUpdate = true;
-    towers.visible = false; glows.visible = false;
-    scene.add(towers); scene.add(glows);
-
-    var wgG = new THREE.BufferGeometry();
-    wgG.setAttribute('position', new THREE.Float32BufferAttribute(wPts,3));
-    wgG.setAttribute('color', new THREE.Float32BufferAttribute(wCols,3));
-    windows = new THREE.Points(wgG, new THREE.PointsMaterial({
-      size:3.4, sizeAttenuation:true, vertexColors:true, map:tex,
-      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
-    }));
-    scene.add(windows);
-
-    /* רשת קרקע */
-    grid = new THREE.GridHelper(3000, 120, 0xF5B845, 0x3A2E78);
-    grid.material.transparent = true; grid.material.opacity = 0; grid.material.depthWrite = false;
-    grid.position.y = 0.02;
-    scene.add(grid);
-
-    /* מסלול נחיתה */
-    var rPts = [], rCols = [], rg1 = new THREE.Color(0xF5B845), rg2 = new THREE.Color(0xFFFFFF);
-    for (var z=60; z>-1200; z-=26){
-      for (var s=-1;s<=1;s+=2){
-        rPts.push(s*15, 0.6, z);
-        var cc = (Math.abs(z)%156 < 26) ? rg2 : rg1;
-        rCols.push(cc.r, cc.g, cc.b);
-      }
-    }
-    var rG = new THREE.BufferGeometry();
-    rG.setAttribute('position', new THREE.Float32BufferAttribute(rPts,3));
-    rG.setAttribute('color', new THREE.Float32BufferAttribute(rCols,3));
-    runway = new THREE.Points(rG, new THREE.PointsMaterial({
-      size:5.2, sizeAttenuation:true, vertexColors:true, map:tex,
-      transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending
-    }));
-    scene.add(runway);
-
-    /* זוהר אופק */
-    var hMat = new THREE.SpriteMaterial({
-      map: tex, color:0xF5B845, transparent:true, opacity:0,
-      depthWrite:false, blending:THREE.AdditiveBlending
-    });
-    horizon = new THREE.Sprite(hMat);
-    horizon.scale.set(1600, 520, 1);
-    horizon.position.set(0, 30, -1250);
-    scene.add(horizon);
-
-    window.addEventListener('resize', onResize);
-    return true;
-  }
-
-  function onResize(){
-    if (!renderer) return;
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-  }
-
-  /* ---------- אנימציה ---------- */
-  var capIdx = -1;
-  function setCaption(i){
-    if (i === capIdx) return;
-    capIdx = i;
-    capEl.classList.add('swap');
-    setTimeout(function(){ capEl.textContent = CAPS[i].s; capEl.classList.remove('swap'); }, 260);
-  }
-
-  var skyA = new THREE.Color(0x03020c), skyB = new THREE.Color(0x1a1147), skyC = new THREE.Color(0x2c1f66);
-  var tmpC = new THREE.Color();
-
-  function frame(now){
-    raf = requestAnimationFrame(frame);
-    if (!startT) startT = now;
-    var elapsed = now - startT;
-    var t = Math.min(1, elapsed / DUR);
-    var idle = landed ? Math.max(0, (elapsed - DUR)/1000) : 0;
-    var dim  = landed ? 0.42 : 1;      /* אחרי הנחיתה הרקע נרגע כדי שהטקסט יהיה קריא */
-
-    /* מצלמה */
-    var s = sampleKeys(t);
-    var bob   = landed ? Math.sin(idle*0.45)*0.5 : 0;
-    var sway  = landed ? Math.sin(idle*0.26)*2.6 : 0;
-    var drift = landed ? 16*(1-Math.exp(-idle/35)) : 0;   /* נדידה עדינה שלא בורחת */
-    camera.position.set(s.px + sway, s.py + bob, s.pz - drift);
-    camera.lookAt(s.lx, s.ly, s.lz - drift);
-    camera.rotation.z = s.roll * (1 - t*0.2);
-
-    /* שמיים וערפל */
-    if (t < 0.45) tmpC.copy(skyA).lerp(skyB, t/0.45);
-    else          tmpC.copy(skyB).lerp(skyC, Math.min(1,(t-0.45)/0.55));
-    renderer.setClearColor(tmpC, 1);
-    scene.fog.color.copy(tmpC);
-    scene.fog.density = 0.00042 * smooth(Math.min(1, Math.max(0,(t-0.25)/0.6)));
-
-    /* פסי מהירות */
-    var speed = Math.sin(Math.min(1,t/0.62) * Math.PI);
-    warp.material.uniforms.uLen.value = 6 + speed*130;
-    warp.material.uniforms.uOpacity.value = Math.max(0, speed*0.5 - Math.max(0,(t-0.55))*0.9);
-    warp.position.z = (t*2600) % 400;
-
-    /* כוכבים */
-    stars.material.opacity = Math.max(0, 1 - Math.max(0,(t-0.30))/0.30);
-    stars.rotation.z = t*0.05;
-
-    /* עננים */
-    var cf = Math.max(0, Math.min(1, (t-0.26)/0.16)) * Math.max(0, 1 - Math.max(0,(t-0.62))/0.22);
-    clouds.material.opacity = cf*0.55;
-    clouds.rotation.y = t*0.12;
-
-    /* עיר */
-    var city = Math.max(0, Math.min(1, (t-0.40)/0.20));
-    towers.visible = glows.visible = city > 0.01;
-    glows.material.opacity  = city*0.32*dim;
-    windows.material.opacity= city*dim;
-    grid.material.opacity   = city*0.22*dim;
-
-    /* מסלול ואופק */
-    runway.material.opacity = Math.max(0, Math.min(1,(t-0.62)/0.22)) * (0.75 + 0.25*Math.sin(elapsed*0.006)) * dim;
-    horizon.material.opacity= Math.max(0, Math.min(1,(t-0.35)/0.4)) * 0.42;
-
-    /* HUD */
-    if (!landed){
-      var ft = Math.round(38000 * Math.pow(1-t, 1.7));
-      altEl.textContent = ft.toLocaleString('en-US');
-      barEl.style.width = (t*100).toFixed(1) + '%';
-      for (var i=CAPS.length-1;i>=0;i--){ if (t >= CAPS[i].t){ setCaption(i); break; } }
-      if (t >= 1) land();
-    }
-
-    renderer.render(scene, camera);
-  }
-
-  /* ---------- הפעלה ---------- */
-  function start(){
-    startT = 0;
-    landed = false;
-    capIdx = -1;
-    body.classList.add('flying');
-    body.classList.remove('landed');
-    hud.style.display = '';
-    hud.classList.remove('gone');
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(frame);
-  }
-
-  var ok = false;
-  if (!reduced && window.THREE){
-    try { ok = build(); } catch(e){ ok = false; }
-  }
-  if (ok){
-    start();
-  } else {
-    /* בלי WebGL או עם העדפת תנועה מופחתת — נכנסים ישר לאתר */
-    canvas.style.display = 'none';
+  var gl = null; try { var c = document.createElement('canvas'); gl = c.getContext('webgl2') || c.getContext('webgl'); } catch (e) {}
+  if (reduced || !gl || !window.THREE) {
+    document.getElementById('sky').style.display = 'none';
     document.getElementById('vignette').style.display = 'none';
-    hud.style.display = 'none';
-    body.classList.remove('flying');
-    body.classList.add('landed');
-    document.body.style.background =
-      'radial-gradient(90% 70% at 70% -10%, rgba(75,59,143,.55), transparent 60%), #0b0722';
+    document.getElementById('hud').style.display = 'none';
+    var fl = document.getElementById('flares'); if (fl) fl.style.display = 'none';
+    body.classList.remove('flying'); body.classList.add('landed');
+    body.style.background = 'radial-gradient(90% 70% at 70% -10%, rgba(75,59,143,.55), transparent 60%), #0b0722';
+    window.__noFlight = true;
   }
-
-  replay.addEventListener('click', function(){
-    if (!ok) return;
-    window.scrollTo({top:0, behavior:'instant'});
-    start();
-  });
-
-  /* השהיית הרינדור כשלא צריך אותו — חיסכון בסוללה */
-  var heroSeen = true;
-  function pause(){ if (raf){ cancelAnimationFrame(raf); raf = 0; } }
-  function resume(){ if (ok && !raf && !document.hidden && (heroSeen || !landed)) raf = requestAnimationFrame(frame); }
-
-  document.addEventListener('visibilitychange', function(){
-    if (document.hidden) pause(); else resume();
-  });
-
-  var heroIO = new IntersectionObserver(function(es){
-    heroSeen = es[0].isIntersecting;
-    if (heroSeen) resume(); else if (landed) pause();
-  }, {threshold:0});
-  heroIO.observe(document.getElementById('hero'));
 
   /* תעודה בגודל מלא */
   var lb = document.getElementById('lightbox'), lbImg = document.getElementById('lb-img');
@@ -878,26 +545,20 @@ body.landed #nav{display:block}
   lb.addEventListener('click', function(e){ if (e.target === lb || e.target.id === 'lb-close') closeLb(); });
   window.addEventListener('keydown', function(e){ if (e.key === 'Escape' && lb.classList.contains('on')) closeLb(); });
 
-  /* גילוי בגלילה — עם רשת ביטחון: אם משהו לא נצפה, הוא נחשף בכל זאת */
+  /* גילוי בגלילה — עם רשת ביטחון */
   var risers = Array.prototype.slice.call(document.querySelectorAll('.rise'));
   var io = null;
   if ('IntersectionObserver' in window){
     io = new IntersectionObserver(function(entries){
       entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
     }, {threshold:0.05, rootMargin:'0px 0px -30px 0px'});
-    risers.forEach(function(el, i){
-      el.style.transitionDelay = (Math.min(i,5)*50) + 'ms';
-      io.observe(el);
-    });
+    risers.forEach(function(el, i){ el.style.transitionDelay = (Math.min(i,5)*50) + 'ms'; io.observe(el); });
   }
   function revealVisible(){
     risers.forEach(function(el){
       if (el.classList.contains('in')) return;
       var r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight*0.96 && r.bottom > 0){
-        el.classList.add('in');
-        if (io) io.unobserve(el);
-      }
+      if (r.top < window.innerHeight*0.96 && r.bottom > 0){ el.classList.add('in'); if (io) io.unobserve(el); }
     });
   }
   window.addEventListener('scroll', revealVisible, {passive:true});
@@ -905,5 +566,6 @@ body.landed #nav{display:block}
   setInterval(revealVisible, 600);
 })();
 </script>
+<script>if(!window.__noFlight){var _s=document.createElement('script');_s.src='assets/flight.js';document.body.appendChild(_s);}</script>
 </body>
 </html>
