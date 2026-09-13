@@ -23,7 +23,7 @@
 
   T.ColorManagement.enabled = false;   // צבעים כפי שנכתבו; המיפוי הטונאלי בסוף
 
-  var DUR = 8500;
+  var DUR = 5000;
   var canvas = document.getElementById('sky');
   var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true });
   renderer.setPixelRatio(DPR);
@@ -238,7 +238,7 @@
       '    float win=step(0.18,f.x)*step(f.x,0.82)*step(0.16,f.y)*step(f.y,0.66);',
       '    float r=hash(cell+vRand.x*13.7);',
       '    float lit=step(1.0-vRand.y,r);',
-      '    float flick=0.75+0.25*sin(uTime*(0.6+r*2.4)+r*40.0);',
+      '    float flick=1.0; // חלונות יציבים — בלי הבהוב',
       '    vec3 glow=mix(uGold,uCyan,step(vRand.z,hash(cell*3.1+vRand.x)));',
       '    col+=glow*win*lit*flick*uGlow;',
       '    float e=smoothstep(hw*0.5-0.9,hw*0.5-0.05,abs(horiz-hw*0.5));',
@@ -396,7 +396,7 @@
       vertexShader: [
         'attribute float aKind,aIdx; uniform float uTime,uScale; varying float vK,vB;',
         'void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mv;',
-        '  float b=1.0; if(aKind>1.5){ b=smoothstep(0.86,1.0,fract(uTime*0.9-aIdx*0.04)); } else if(aKind>0.5){ b=0.55+0.45*sin(uTime*3.0+aIdx*0.05); }',
+        '  float b=1.0; // אורות מסלול יציבים — בלי אורות ריצה ובלי פעימה',
         '  vK=aKind; vB=b; gl_PointSize=min((aKind>1.5?14.0:9.0)*uScale/max(-mv.z,1.0)*0.9+1.5, 42.0); }'].join('\n'),
       fragmentShader: [
         'uniform float uOpacity; varying float vK,vB;',
@@ -434,7 +434,7 @@
   });
   var finalU = {
     tScene: { value: null }, tBloom1: { value: null }, tBloom2: { value: null },
-    uBloom: { value: 1.15 }, uCA: { value: 0.012 }, uVig: { value: 0.55 }, uGrain: { value: 0.035 },
+    uBloom: { value: 1.15 }, uCA: { value: 0.004 }, uVig: { value: 0.55 }, uGrain: { value: 0 },
     uFlash: { value: 0 }, uFade: { value: 1 }, uTime: { value: 0 }, uExposure: { value: 1.0 }
   };
   var finalMat = new T.ShaderMaterial({
@@ -482,17 +482,17 @@
   addEventListener('resize', resize);
 
   /* =====================================================================
-     מסלול המצלמה — עקומה חלקה + גלגול + טורבולנציה
+     מסלול המצלמה — קו גישה ישר על ציר המסלול (x=0), בלי פניות ובלי גלגול
      ===================================================================== */
   var P = new T.CatmullRomCurve3([
-    new T.Vector3(0, 1150, 3000), new T.Vector3(-160, 1000, 2250), new T.Vector3(140, 760, 1550),
-    new T.Vector3(70, 470, 1050), new T.Vector3(-90, 330, 700), new T.Vector3(150, 190, 430),
-    new T.Vector3(-60, 95, 220), new T.Vector3(10, 26, 80), new T.Vector3(0, 4.2, 8)
+    new T.Vector3(0, 1150, 3000), new T.Vector3(0, 1000, 2250), new T.Vector3(0, 760, 1550),
+    new T.Vector3(0, 470, 1050), new T.Vector3(0, 330, 700), new T.Vector3(0, 190, 430),
+    new T.Vector3(0, 95, 220), new T.Vector3(0, 26, 80), new T.Vector3(0, 4.2, 8)
   ], false, 'centripetal', 0.5);
   var L = new T.CatmullRomCurve3([
     new T.Vector3(0, 560, 0), new T.Vector3(0, 480, -200), new T.Vector3(0, 380, -320),
-    new T.Vector3(0, 250, -380), new T.Vector3(40, 130, -420), new T.Vector3(-20, 70, -480),
-    new T.Vector3(10, 30, -560), new T.Vector3(0, 8, -640), new T.Vector3(0, 3.6, -760)
+    new T.Vector3(0, 250, -380), new T.Vector3(0, 130, -420), new T.Vector3(0, 70, -480),
+    new T.Vector3(0, 30, -560), new T.Vector3(0, 8, -640), new T.Vector3(0, 3.6, -760)
   ], false, 'centripetal', 0.5);
   function ease(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
   // עקומת מהירות: מהר בסטרטוספירה, מאט בעננים, מהיר בעיר, מאט מאוד בנחיתה
@@ -550,13 +550,10 @@
       idleT = (now - landedAt) / 1000;
       var drift = 10 * (1 - Math.exp(-idleT / 40));
       _p.z -= drift; _l.z -= drift;
-      _p.y += Math.sin(idleT * 0.35) * 0.25; _p.x += Math.sin(idleT * 0.22) * 0.9;
     }
-    // גלגול מהפנייה האופקית
-    var vx = _p.x - prevPos.x; prevPos.copy(_p);
-    var targetRoll = landed ? 0 : Math.max(-0.2, Math.min(0.2, -vx * 0.035));
-    rollV += (targetRoll - roll) * 0.05; rollV *= 0.86; roll += rollV;
-    // טורבולנציה בעננים + רעד נחיתה
+    // טיסה ישרה: בלי גלגול, בלי טורבולנציה, בלי רעד
+    prevPos.copy(_p);
+    roll = 0; rollV = 0;
     var turb = 0; shake = 0;
     var sx = Math.sin(time * 37.1) * 0.6 + Math.sin(time * 61.3) * 0.4, sy = Math.sin(time * 43.7) * 0.6 + Math.cos(time * 71.9) * 0.4;
     camera.position.copy(_p).addScaledVector(camera.up, sy * shake).add(new T.Vector3(sx * shake, 0, 0));
@@ -610,7 +607,7 @@
     /* --- ברקים בתוך העננים --- */
     /* טיסה חלקה — בלי ברקים */
     // הבזק פריצה מהעננים
-    if (!landed && t > 0.455 && t < 0.49) { flash = Math.max(flash, 0.18); }   // הבזק רך אחד בפריצה מהעננים
+    flash = 0; // בלי הבזקים בכלל
     flash *= Math.pow(0.02, dt); finalU.uFlash.value = flash * 0.7;
 
     /* --- נחיתה: מגע --- */
@@ -621,7 +618,7 @@
     finalU.uBloom.value = landed ? 1.15 - 0.45 * settle : 1.15 + kCloud * 0.35 - kCity * 0.25;
     finalU.uCA.value = 0.006;
     finalU.uVig.value = landed ? 0.7 : 0.5;
-    finalU.uGrain.value = LOW ? 0 : 0.035;
+    finalU.uGrain.value = 0; // בלי גריין — רעש פר-פריים מהבהב
     var settle = landed ? Math.min(1, idleT / 2.6) : 0; settle = settle * settle * (3 - 2 * settle);
     finalU.uFade.value = landed ? 1 - 0.55 * settle : Math.min(1, elapsed / 700);
     finalU.uExposure.value = landed ? 1 - 0.15 * settle : 1;
