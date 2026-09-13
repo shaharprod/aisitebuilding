@@ -61,8 +61,9 @@
   function activate() {
     if (muted) return;
     if (!built) build();
-    if (ctx.state !== 'running') { ctx.resume().then(function () { running = true; ramp(master.gain, 0.9, 0.6); refresh(); }); }
-    else { running = true; ramp(master.gain, 0.9, 0.6); refresh(); }
+    running = true; refresh();
+    var go = function () { ramp(master.gain, 0.9, 0.6); refresh(); };
+    if (ctx.state !== 'running') { ctx.resume().then(go, function () { running = false; refresh(); }); } else { go(); }
   }
   function silence() { if (built) ramp(master.gain, 0, 0.3); running = false; refresh(); }
 
@@ -77,9 +78,10 @@
   }
 
   function toggle() {
-    muted = !muted;
+    // לחיצה ראשונה (עוד לא מנגן, לא מושתק) = הפעלה; מנגן = השתקה; מושתק = ביטול השתקה
+    if (running && !muted) { muted = true; silence(); }
+    else { muted = false; activate(); }
     try { localStorage.setItem(KEY, muted ? 'off' : 'on'); } catch (e) {}
-    if (muted) silence(); else activate();
   }
 
   /* -------- API שהטיסה קוראת לה -------- */
@@ -127,12 +129,14 @@
   }
 
   /* -------- חיווט -------- */
-  function firstGesture() {
+  var GEST = ['pointerdown', 'keydown', 'touchstart', 'click'];
+  function firstGesture(e) {
+    if (e && e.target && e.target.closest && e.target.closest('.snd')) return;   // הכפתור עצמו מטפל בעצמו
     if (!muted) activate();
-    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) { window.removeEventListener(ev, firstGesture, true); });
+    GEST.forEach(function (ev) { window.removeEventListener(ev, firstGesture, true); });
   }
   if (AC) {
-    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) { window.addEventListener(ev, firstGesture, true); });
+    GEST.forEach(function (ev) { window.addEventListener(ev, firstGesture, true); });
     document.addEventListener('visibilitychange', function () { if (!built) return; if (document.hidden) ramp(master.gain, 0, 0.2); else if (running && !muted) ramp(master.gain, 0.9, 0.6); });
   }
   function bind(el) {
