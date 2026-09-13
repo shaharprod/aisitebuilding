@@ -268,7 +268,7 @@
     place(-150, -420, 34, 34, 420, true); place(170, -470, 30, 30, 380, true); place(-330, -700, 26, 26, 330, true);
     while (i < n) {
       var side = Math.random() < 0.5 ? -1 : 1;
-      var dist = 46 + Math.pow(Math.random(), 0.75) * 980;
+      var dist = 64 + Math.pow(Math.random(), 0.75) * 960;
       var x = side * dist, z = -1500 + Math.random() * 2300;
       var near = Math.exp(-Math.abs(x) / 420) * Math.exp(-Math.abs(z + 450) / 700);
       var h = 14 + Math.pow(Math.random(), 2.4) * 150 + near * (40 + Math.random() * 190);
@@ -408,6 +408,109 @@
   })();
 
   /* =====================================================================
+     שער הנחיתה — הולוגרמה של דף הנחיתה שהטייס טס לתוכה.
+     המסגרת בגובה GH יחידות, במרחק D_FIT היא ממלאת את המסך בדיוק
+     (GH = 2·D_FIT·tan(fov/2)), ושם הטיסה נגמרת והדף האמיתי נכנס.
+     ===================================================================== */
+  var D_FIT = 40, GH = 2 * D_FIT * Math.tan(camera.fov * Math.PI / 360), GY = 24, GZ = -60;
+  var gate = (function () {
+    var cv = document.createElement('canvas'), cx = cv.getContext('2d');
+    var tex = new T.CanvasTexture(cv); tex.colorSpace = T.LinearSRGBColorSpace; tex.minFilter = T.LinearFilter; tex.generateMipmaps = false;
+    var portrait = new Image(); portrait.src = 'assets/portrait.jpg';
+    var logo = new Image(); logo.src = 'assets/logo.png';
+    function rr(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
+    function draw(aspect) {
+      var W = 1024, H = Math.round(1024 / aspect); cv.width = W; cv.height = H;
+      cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, W, H);
+      // רקע הדף — סגול עמוק שקוף למחצה, כמו חלון אל האתר
+      cx.fillStyle = 'rgba(11,7,34,0.62)'; cx.fillRect(0, 0, W, H);
+      cx.strokeStyle = 'rgba(255,255,255,0.05)'; cx.lineWidth = 1;
+      for (var gx = 0; gx < W; gx += 64) { cx.beginPath(); cx.moveTo(gx, 0); cx.lineTo(gx, H); cx.stroke(); }
+      for (var gy = 0; gy < H; gy += 64) { cx.beginPath(); cx.moveTo(0, gy); cx.lineTo(W, gy); cx.stroke(); }
+      var k = Math.min(W / 1024, H / 640), ox = (W - 1024 * k) / 2, oy = (H - 640 * k) / 2;
+      cx.setTransform(k, 0, 0, k, ox, oy);
+      var gold = '#F5B845', gold2 = '#FFD680', cream = '#FFF6E5', muted = 'rgba(214,205,240,0.75)', cyan = '#7FF0FF';
+      var HEB = "'Heebo','Assistant',Arial,sans-serif";
+      cx.direction = 'rtl'; cx.textBaseline = 'alphabetic';
+      // ניווט
+      cx.fillStyle = 'rgba(7,4,22,0.85)'; cx.fillRect(0, 0, 1024, 58);
+      cx.fillStyle = 'rgba(245,184,69,0.35)'; cx.fillRect(0, 58, 1024, 1);
+      if (logo.complete && logo.naturalWidth) { cx.save(); cx.beginPath(); cx.arc(986, 29, 17, 0, Math.PI * 2); cx.clip(); cx.drawImage(logo, 969, 12, 34, 34); cx.restore(); }
+      else { cx.fillStyle = gold; cx.beginPath(); cx.arc(986, 29, 15, 0, Math.PI * 2); cx.fill(); }
+      cx.textAlign = 'right'; cx.fillStyle = cream; cx.font = '900 16px ' + HEB; cx.fillText('AI ACADEMY', 958, 35);
+      cx.fillStyle = '#3ddc84'; cx.beginPath(); cx.arc(842, 30, 3.5, 0, Math.PI * 2); cx.fill();
+      cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText('ONLINE', 832, 34);
+      cx.font = '500 14px ' + HEB; cx.fillStyle = muted;
+      var links = ['הקורס החינמי', 'מה אני עושה', 'פרויקטים', 'הדרך לכאן'], lx = 700;
+      for (var i = 0; i < links.length; i++) { cx.fillText(links[i], lx, 35); lx -= cx.measureText(links[i]).width + 34; }
+      cx.fillStyle = gold; rr(24, 15, 140, 30, 15); cx.fill(); cx.fillStyle = '#1a1030'; cx.font = '700 13px ' + HEB; cx.textAlign = 'center'; cx.fillText('לקורס החינמי', 94, 35);
+      // גיבור — טקסט מימין
+      cx.textAlign = 'right';
+      cx.fillStyle = gold; cx.font = '700 13px ' + HEB; cx.fillText('AI ACADEMY · שחר פרודקשן', 972, 118);
+      cx.fillStyle = cream; cx.font = '900 66px ' + HEB; cx.fillText('שמוליק שחר', 975, 186);
+      cx.fillStyle = gold2; cx.font = '700 24px ' + HEB; cx.fillText('אני מלמד איך להתקדם בחיים ובעבודה —', 972, 228); cx.fillText('באמצעות בינה מלאכותית', 972, 260);
+      cx.fillStyle = muted; cx.font = '400 14px ' + HEB;
+      var sub = ['יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע. מתרגם טכנולוגיה', 'לשפה פשוטה — למעלה מעשר שנים של הדרכת דיגיטל, וארבע שנים', 'שבהן אני מכניס כלי AI לתוך העבודה היומיומית של אנשים ועסקים.'];
+      for (var s2 = 0; s2 < sub.length; s2++) cx.fillText(sub[s2], 972, 296 + s2 * 22);
+      cx.fillStyle = gold; rr(786, 372, 186, 40, 20); cx.fill(); cx.fillStyle = '#1a1030'; cx.font = '700 15px ' + HEB; cx.textAlign = 'center'; cx.fillText('לקורס ה-AI החינמי ←', 879, 398);
+      cx.strokeStyle = 'rgba(255,214,128,0.55)'; cx.lineWidth = 1.5; rr(666, 372, 104, 40, 20); cx.stroke(); cx.fillStyle = cream; cx.fillText('לדבר איתי', 718, 398);
+      cx.textAlign = 'right'; cx.font = '500 12px ' + HEB; cx.fillStyle = muted;
+      cx.strokeStyle = 'rgba(255,255,255,0.18)'; cx.lineWidth = 1; rr(760, 432, 212, 28, 14); cx.stroke(); cx.fillText('Google Gemini Certified Educator', 958, 451);
+      rr(580, 432, 168, 28, 14); cx.stroke(); cx.fillText('חבר NVIDIA Developer Group', 736, 451);
+      // אריחי טלמטריה
+      var tiles = [['הדרכת דיגיטל', '10+', 'שנים'], ['תלמידים', '1,800+', 'בהדרכות'], ['פרויקטים', '9', 'חיים'], ['שפות', '5', 'בקורס']];
+      for (var t2 = 0; t2 < tiles.length; t2++) {
+        var tx = 972 - t2 * 118 - 108;
+        cx.fillStyle = 'rgba(255,255,255,0.05)'; rr(tx, 486, 108, 82, 10); cx.fill();
+        cx.strokeStyle = 'rgba(245,184,69,0.35)'; cx.lineWidth = 1; rr(tx, 486, 108, 82, 10); cx.stroke();
+        cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText(tiles[t2][0], tx + 96, 506);
+        cx.fillStyle = gold; cx.font = '900 30px ' + HEB; cx.textAlign = 'left'; cx.direction = 'ltr'; cx.fillText(tiles[t2][1], tx + 12, 542); cx.direction = 'rtl'; cx.textAlign = 'right';
+        cx.fillStyle = muted; cx.font = '500 11px ' + HEB; cx.fillText(tiles[t2][2], tx + 96, 560);
+      }
+      // דיוקן משמאל
+      var px = 250, py = 330, pr = 132;
+      cx.strokeStyle = 'rgba(245,184,69,0.35)'; cx.setLineDash([6, 8]); cx.lineWidth = 1.5; cx.beginPath(); cx.arc(px, py, pr + 22, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]);
+      cx.strokeStyle = cyan; cx.lineWidth = 2; cx.globalAlpha = 0.55; cx.beginPath(); cx.arc(px, py, pr + 6, 0, Math.PI * 2); cx.stroke(); cx.globalAlpha = 1;
+      if (portrait.complete && portrait.naturalWidth) {
+        cx.save(); cx.beginPath(); cx.arc(px, py, pr, 0, Math.PI * 2); cx.clip();
+        var iw = portrait.naturalWidth, ih = portrait.naturalHeight, sc = Math.max(pr * 2 / iw, pr * 2 / ih);
+        cx.drawImage(portrait, px - iw * sc / 2, py - ih * sc / 2, iw * sc, ih * sc); cx.restore();
+      } else { cx.fillStyle = 'rgba(75,59,143,0.6)'; cx.beginPath(); cx.arc(px, py, pr, 0, Math.PI * 2); cx.fill(); }
+      cx.setTransform(1, 0, 0, 1, 0, 0);
+      tex.needsUpdate = true;
+    }
+    var mat = new T.ShaderMaterial({
+      uniforms: { tPage: { value: tex }, uOpacity: { value: 0 }, uAspect: { value: innerWidth / innerHeight }, uGold: { value: new T.Color(0xF5B845) }, uTime: { value: 0 } },
+      transparent: true, depthWrite: true, side: T.FrontSide,
+      vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: [
+        'uniform sampler2D tPage; uniform float uOpacity,uAspect,uTime; uniform vec3 uGold; varying vec2 vUv;',
+        'void main(){',
+        '  vec4 p=texture2D(tPage,vUv);',
+        '  float ax=min(vUv.x,1.0-vUv.x)*uAspect, ay=min(vUv.y,1.0-vUv.y);',
+        '  float edge=min(ax,ay);',
+        '  float corner=1.0-step(0.085,max(ax,ay));',
+        '  float th=0.0075*(1.0+1.4*corner);',
+        '  float border=1.0-smoothstep(th*0.6,th,edge);',
+        '  float scan=0.95+0.05*step(0.5,fract(vUv.y*200.0));',
+        '  vec3 col=p.rgb*scan;',
+        '  col=mix(col,uGold*1.9,border);',
+        '  float a=max(p.a,border);',
+        '  gl_FragColor=vec4(col,a*uOpacity);',
+        '}'].join('\n')
+    });
+    var mesh = new T.Mesh(new T.PlaneGeometry(1, 1), mat);
+    mesh.position.set(0, GY, GZ); mesh.scale.set(GH * camera.aspect, GH, 1); mesh.renderOrder = -1; mesh.frustumCulled = false;   // נצבע לפני השקופים האחרים וכותב עומק — חלון אל הדף, לא זכוכית
+    scene.add(mesh);
+    var drawT = 0;
+    function refresh() { clearTimeout(drawT); drawT = setTimeout(function () { draw(innerWidth / innerHeight); mat.uniforms.uAspect.value = innerWidth / innerHeight; mesh.scale.x = GH * (innerWidth / innerHeight); }, 120); }
+    draw(innerWidth / innerHeight);
+    portrait.onload = refresh; logo.onload = refresh;
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
+    return { mesh: mesh, mat: mat, refresh: refresh };
+  })();
+
+  /* =====================================================================
      פוסט-פרוסס משלנו: bloom + אברציה + vignette + גריין + הבזק
      ===================================================================== */
   var W = Math.floor(innerWidth * DPR), H = Math.floor(innerHeight * DPR);
@@ -478,6 +581,7 @@
     W = Math.floor(w * DPR); H = Math.floor(h * DPR);
     rtScene.setSize(W, H); rtA.setSize(W >> 1, H >> 1); rtB.setSize(W >> 1, H >> 1); rtC.setSize(W >> 2, H >> 2); rtD.setSize(W >> 2, H >> 2);
     runway.material.uniforms.uScale.value = h;
+    gate.refresh();
   }
   addEventListener('resize', resize);
 
@@ -487,20 +591,20 @@
   var P = new T.CatmullRomCurve3([
     new T.Vector3(0, 1150, 3000), new T.Vector3(0, 1000, 2250), new T.Vector3(0, 760, 1550),
     new T.Vector3(0, 470, 1050), new T.Vector3(0, 330, 700), new T.Vector3(0, 190, 430),
-    new T.Vector3(0, 95, 220), new T.Vector3(0, 26, 80), new T.Vector3(0, 4.2, 8)
+    new T.Vector3(0, 100, 220), new T.Vector3(0, 44, 90), new T.Vector3(0, GY + 2, 30), new T.Vector3(0, GY, GZ + D_FIT)
   ], false, 'centripetal', 0.5);
   var L = new T.CatmullRomCurve3([
     new T.Vector3(0, 560, 0), new T.Vector3(0, 480, -200), new T.Vector3(0, 380, -320),
     new T.Vector3(0, 250, -380), new T.Vector3(0, 130, -420), new T.Vector3(0, 70, -480),
-    new T.Vector3(0, 30, -560), new T.Vector3(0, 8, -640), new T.Vector3(0, 3.6, -760)
+    new T.Vector3(0, 40, -560), new T.Vector3(0, GY + 1, -640), new T.Vector3(0, GY, -720), new T.Vector3(0, GY, -800)
   ], false, 'centripetal', 0.5);
   function ease(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
   // עקומת מהירות: מהר בסטרטוספירה, מאט בעננים, מהיר בעיר, מאט מאוד בנחיתה
-  function pathT(t) { return Math.pow(t, 1.18) * (1 - 0.06 * Math.sin(t * Math.PI)); }
+  function pathT(t) { return 1 - Math.pow(1 - t, 1.7); }   // מהר בגובה, מאט בעדינות אל תוך הדף
 
   var CAPS = [
     [0.00, 'סטרטוספירה · 38,000 רגל'], [0.24, 'נכנסים לשכבת העננים'],
-    [0.47, 'פורצים אל עולם הבינה המלאכותית'], [0.70, 'מנמיכים בין המגדלים'], [0.88, 'נוחתים']
+    [0.47, 'פורצים אל עולם הבינה המלאכותית'], [0.66, 'יעד נעול · דף הנחיתה'], [0.86, 'נכנסים לדף']
   ];
 
   /* ---------- HUD ---------- */
@@ -536,6 +640,29 @@
     setTimeout(function () { hud.style.display = 'none'; }, 1500);
   }
 
+  /* ---------- כוונת נעילה על מסגרת הדף (DOM, לפי הקרנת פינות השער) ---------- */
+  var lockEl = document.getElementById('lock'), lockLbl = document.getElementById('lockl'), _c = new T.Vector3();
+  function updateLock(kCity) {
+    if (!lockEl) return;
+    camera.updateMatrixWorld(); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+    var hw = GH * camera.aspect / 2, hh = GH / 2, minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, behind = false;
+    for (var i = 0; i < 4; i++) {
+      _c.set(i & 1 ? hw : -hw, GY + (i & 2 ? hh : -hh), GZ).project(camera);
+      if (_c.z > 1) behind = true;
+      var sx = (_c.x + 1) / 2 * innerWidth, sy = (1 - _c.y) / 2 * innerHeight;
+      if (sx < minX) minX = sx; if (sx > maxX) maxX = sx; if (sy < minY) minY = sy; if (sy > maxY) maxY = sy;
+    }
+    var w = maxX - minX, h = maxY - minY, cxp = (minX + maxX) / 2, cyp = (minY + maxY) / 2;
+    if (w < 56) { var asp = camera.aspect; w = 56; h = 56 / asp; }
+    var fill = w / innerWidth;
+    var op = behind ? 0 : Math.min(1, (kCity - 0.15) * 4) * Math.max(0, Math.min(1, (0.9 - fill) / 0.12));
+    lockEl.style.opacity = op.toFixed(3);
+    lockEl.style.transform = 'translate(' + (cxp - w / 2).toFixed(1) + 'px,' + (cyp - h / 2).toFixed(1) + 'px)';
+    lockEl.style.width = w.toFixed(1) + 'px'; lockEl.style.height = h.toFixed(1) + 'px';
+    var dist = Math.max(0, Math.round(camera.position.z - GZ));
+    lockLbl.textContent = 'יעד · דף הנחיתה · ' + dist.toLocaleString('en-US') + ' מ׳';
+  }
+
   var frozen = false;
   function frame(now) {
     if (!frozen) raf = requestAnimationFrame(frame);
@@ -543,6 +670,7 @@
     var dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
     var elapsed = now - startT, t = Math.min(1, elapsed / DUR), time = elapsed / 1000;
     var s = pathT(t);
+    var settle = 0;
 
     /* --- מצלמה --- */
     P.getPointAt(s, _p); L.getPointAt(s, _l);
@@ -550,6 +678,7 @@
       idleT = (now - landedAt) / 1000;
       var drift = 10 * (1 - Math.exp(-idleT / 40));
       _p.z -= drift; _l.z -= drift;
+      settle = Math.min(1, idleT / 2.6); settle = settle * settle * (3 - 2 * settle);
     }
     // טיסה ישרה: בלי גלגול, בלי טורבולנציה, בלי רעד
     prevPos.copy(_p);
@@ -604,6 +733,12 @@
     runway.material.uniforms.uTime.value = time;
     if (kCity > 0) updateStreams(dt);
 
+    /* --- שער הנחיתה: הולוגרמת הדף מתבהרת מהפריצה מהעננים ונמוגה כשהדף האמיתי נכנס --- */
+    gate.mat.uniforms.uTime.value = time;
+    var gateOut = landed ? Math.min(1, idleT / 1.4) : 0; gateOut = gateOut * gateOut * (3 - 2 * gateOut);
+    gate.mat.uniforms.uOpacity.value = Math.min(1, kCity * 1.4) * (1 - gateOut);
+    if (!landed) updateLock(kCity);
+
     /* --- ברקים בתוך העננים --- */
     /* טיסה חלקה — בלי ברקים */
     // הבזק פריצה מהעננים
@@ -619,7 +754,6 @@
     finalU.uCA.value = 0.006;
     finalU.uVig.value = landed ? 0.7 : 0.5;
     finalU.uGrain.value = 0; // בלי גריין — רעש פר-פריים מהבהב
-    var settle = landed ? Math.min(1, idleT / 2.6) : 0; settle = settle * settle * (3 - 2 * settle);
     finalU.uFade.value = landed ? 1 - 0.55 * settle : Math.min(1, elapsed / 700);
     finalU.uExposure.value = landed ? 1 - 0.15 * settle : 1;
 
