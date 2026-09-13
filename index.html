@@ -86,6 +86,16 @@ body.flying{overflow:hidden;height:100vh}
   display:flex;align-items:center;gap:22%;opacity:.55;pointer-events:none;transition:opacity .6s}
 #horizon i{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,214,128,.9),transparent)}
 #horizon b{width:12px;height:12px;border:1px solid rgba(255,214,128,.9);border-radius:50%;box-shadow:0 0 12px rgba(245,184,69,.6)}
+#lock{position:absolute;left:0;top:0;width:56px;height:36px;opacity:0;pointer-events:none;will-change:transform,width,height;
+  transition:opacity .35s ease}
+#lock i{position:absolute;width:16px;height:16px;border:2px solid var(--gold-2);box-shadow:0 0 10px rgba(245,184,69,.55)}
+#lock i:nth-child(1){left:-2px;top:-2px;border-right:0;border-bottom:0;border-top-left-radius:3px}
+#lock i:nth-child(2){right:-2px;top:-2px;border-left:0;border-bottom:0;border-top-right-radius:3px}
+#lock i:nth-child(3){left:-2px;bottom:-2px;border-right:0;border-top:0;border-bottom-left-radius:3px}
+#lock i:nth-child(4){right:-2px;bottom:-2px;border-left:0;border-top:0;border-bottom-right-radius:3px}
+#lock b{position:absolute;right:0;bottom:calc(100% + 8px);white-space:nowrap;direction:rtl;
+  font-family:'Heebo';font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--gold-2);
+  background:rgba(10,6,30,.6);border:1px solid rgba(245,184,69,.35);padding:4px 10px;border-radius:999px;backdrop-filter:blur(6px)}
 #flares{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 .flare{position:absolute;left:0;top:0;width:90px;height:90px;border-radius:50%;opacity:0;will-change:transform,opacity;
   background:radial-gradient(circle,rgba(255,214,128,.55) 0%,rgba(255,170,90,.18) 45%,transparent 70%);mix-blend-mode:screen}
@@ -359,6 +369,7 @@ body.landed #nav{display:block}
     </div>
   </div>
   <div id="horizon"><i></i><b></b><i></i></div>
+  <div id="lock"><i></i><i></i><i></i><i></i><b id="lockl">יעד · דף הנחיתה</b></div>
   <div class="hud-bottom">
     <div id="caption">מתניעים…</div>
     <div class="bar"><i id="barfill"></i></div>
