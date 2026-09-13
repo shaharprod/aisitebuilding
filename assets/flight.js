@@ -23,7 +23,7 @@
 
   T.ColorManagement.enabled = false;   // צבעים כפי שנכתבו; המיפוי הטונאלי בסוף
 
-  var DUR = 17000;
+  var DUR = 8500;
   var canvas = document.getElementById('sky');
   var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true });
   renderer.setPixelRatio(DPR);
@@ -265,7 +265,7 @@
       i++;
     }
     // שני צריחים ליד הליבה
-    place(-150, -420, 34, 34, 420, true); place(170, -470, 30, 30, 380, true); place(0, -640, 26, 26, 330, true);
+    place(-150, -420, 34, 34, 420, true); place(170, -470, 30, 30, 380, true); place(-330, -700, 26, 26, 330, true);
     while (i < n) {
       var side = Math.random() < 0.5 ? -1 : 1;
       var dist = 46 + Math.pow(Math.random(), 0.75) * 980;
@@ -499,8 +499,8 @@
   function pathT(t) { return Math.pow(t, 1.18) * (1 - 0.06 * Math.sin(t * Math.PI)); }
 
   var CAPS = [
-    [0.00, 'מתניעים…'], [0.09, 'סטרטוספירה · 38,000 רגל'], [0.27, 'נכנסים לשכבת העננים'],
-    [0.50, 'פורצים אל עולם הבינה המלאכותית'], [0.72, 'מנמיכים בין המגדלים'], [0.90, 'מסלול בטווח ראייה — נוחתים']
+    [0.00, 'סטרטוספירה · 38,000 רגל'], [0.24, 'נכנסים לשכבת העננים'],
+    [0.47, 'פורצים אל עולם הבינה המלאכותית'], [0.70, 'מנמיכים בין המגדלים'], [0.88, 'נוחתים']
   ];
 
   /* ---------- HUD ---------- */
@@ -533,7 +533,7 @@
     hud.classList.add('gone');
     body.classList.remove('flying'); body.classList.add('landed');
     window.scrollTo(0, 0);
-    setTimeout(function () { hud.style.display = 'none'; }, 900);
+    setTimeout(function () { hud.style.display = 'none'; }, 1500);
   }
 
   var frozen = false;
@@ -548,17 +548,16 @@
     P.getPointAt(s, _p); L.getPointAt(s, _l);
     if (landed) {
       idleT = (now - landedAt) / 1000;
-      var drift = 14 * (1 - Math.exp(-idleT / 30));
+      var drift = 10 * (1 - Math.exp(-idleT / 40));
       _p.z -= drift; _l.z -= drift;
-      _p.y += Math.sin(idleT * 0.5) * 0.35; _p.x += Math.sin(idleT * 0.31) * 1.4;
+      _p.y += Math.sin(idleT * 0.35) * 0.25; _p.x += Math.sin(idleT * 0.22) * 0.9;
     }
     // גלגול מהפנייה האופקית
     var vx = _p.x - prevPos.x; prevPos.copy(_p);
-    var targetRoll = landed ? 0 : Math.max(-0.42, Math.min(0.42, -vx * 0.06));
-    rollV += (targetRoll - roll) * 0.08; rollV *= 0.82; roll += rollV;
+    var targetRoll = landed ? 0 : Math.max(-0.2, Math.min(0.2, -vx * 0.035));
+    rollV += (targetRoll - roll) * 0.05; rollV *= 0.86; roll += rollV;
     // טורבולנציה בעננים + רעד נחיתה
-    var turb = (1 - Math.abs((t - 0.40) / 0.14)); turb = Math.max(0, turb); turb = turb * turb * (landed ? 0 : 1);
-    shake = Math.max(shake * 0.9, turb * 1.6);
+    var turb = 0; shake = 0;
     var sx = Math.sin(time * 37.1) * 0.6 + Math.sin(time * 61.3) * 0.4, sy = Math.sin(time * 43.7) * 0.6 + Math.cos(time * 71.9) * 0.4;
     camera.position.copy(_p).addScaledVector(camera.up, sy * shake).add(new T.Vector3(sx * shake, 0, 0));
     camera.lookAt(_l);
@@ -609,23 +608,23 @@
     if (kCity > 0) updateStreams(dt);
 
     /* --- ברקים בתוך העננים --- */
-    if (!landed && t > 0.30 && t < 0.47 && time > nextBolt) { flash = 0.55 + Math.random() * 0.45; nextBolt = time + 0.5 + Math.random() * 1.6; if (window.__sound) window.__sound.thunder(flash); }
+    /* טיסה חלקה — בלי ברקים */
     // הבזק פריצה מהעננים
-    if (!landed && t > 0.455 && t < 0.47) { flash = Math.max(flash, 0.35); }
+    if (!landed && t > 0.455 && t < 0.49) { flash = Math.max(flash, 0.18); }   // הבזק רך אחד בפריצה מהעננים
     flash *= Math.pow(0.02, dt); finalU.uFlash.value = flash * 0.7;
 
     /* --- נחיתה: מגע --- */
-    if (!landed && t > 0.965 && t < 0.985) { shake = Math.max(shake, 0.9 * (1 - (t - 0.965) / 0.02)); if (!touched) { touched = true; if (window.__sound) window.__sound.touchdown(); } }
-    if (window.__sound) window.__sound.setPhase(t, kCloud, kCity, turb, landed, dt);
+    /* נחיתה רכה — בלי רעד מגע */
 
     /* --- פוסט --- */
     finalU.uTime.value = time;
-    finalU.uBloom.value = landed ? 0.7 : 1.15 + kCloud * 0.35 - kCity * 0.25;
-    finalU.uCA.value = 0.008 + turb * 0.02;
+    finalU.uBloom.value = landed ? 1.15 - 0.45 * settle : 1.15 + kCloud * 0.35 - kCity * 0.25;
+    finalU.uCA.value = 0.006;
     finalU.uVig.value = landed ? 0.7 : 0.5;
     finalU.uGrain.value = LOW ? 0 : 0.035;
-    finalU.uFade.value = landed ? Math.max(0.42, 1 - idleT * 0.6) : Math.min(1, elapsed / 900);
-    finalU.uExposure.value = landed ? 0.85 : 1;
+    var settle = landed ? Math.min(1, idleT / 2.6) : 0; settle = settle * settle * (3 - 2 * settle);
+    finalU.uFade.value = landed ? 1 - 0.55 * settle : Math.min(1, elapsed / 700);
+    finalU.uExposure.value = landed ? 1 - 0.15 * settle : 1;
 
     /* --- HUD --- */
     if (!landed) {
